@@ -1,3 +1,4 @@
+
 import json, subprocess, random
 from pathlib import Path
 from random import shuffle
@@ -31,7 +32,7 @@ def save_scores(scores):
         json.dump(scores, f, indent=2)
 
 def get_player_name():
-    return input("Enter your name, explorer: ").strip().lower()
+    return input("Explorer name: ").strip().lower()
 
 def update_score(scores, name, points):
     scores[name] = scores.get(name, 0) + points
@@ -40,8 +41,7 @@ def update_score(scores, name, points):
 
 def is_close_match(word, correct_def, user_def):
     if len(user_def.strip()) < 3:
-        return False  # Automatically reject very short answers
-
+        return False
     prompt = f"""
 You are a teacher. The correct definition of the word '{word}' is: '{correct_def}'.
 A student gave this definition: '{user_def}'.
@@ -54,14 +54,10 @@ Respond only with YES or NO.
     return "yes" in run_ollama(prompt).lower()
 
 def generate_mcq_from_words(word, correct_def, all_word_defs):
-    # Pick 3 other random definitions from the dictionary, excluding this word
     distractors = [entry["definition"] for entry in all_word_defs if entry["word"] != word]
     distractors = random.sample(distractors, min(3, len(distractors)))
-
-    # Combine and shuffle
     all_options = [{"text": correct_def, "correct": True}] + [{"text": d, "correct": False} for d in distractors]
     random.shuffle(all_options)
-
     labels = ["A", "B", "C", "D"]
     labeled = [f"{label}) {opt['text']}" for label, opt in zip(labels, all_options)]
     correct_label = labels[[i for i, opt in enumerate(all_options) if opt["correct"]][0]]
@@ -71,43 +67,57 @@ def present_challenge(word_info, name, scores, all_words):
     word = word_info["word"]
     correct_def = word_info["definition"]
 
-    print(f"\nA guardian blocks your path. It whispers: What does '{word.upper()}' mean?")
-    typed_answer = input("\nType your definition: ").strip()
+    print(f"\n{word.upper()}")
+    typed_answer = input("> ").strip()
 
     if is_close_match(word, correct_def, typed_answer):
         points = 3
-        print(f"✅ Well done! You earn {points} points.")
+        print(f"✅ +{points} points")
     else:
-        print("❌ Hmm... not quite right. Let's try multiple choice.")
+        print("❌ Let's try multiple choice.")
         options, correct_letter = generate_mcq_from_words(word, correct_def, all_words)
-        print("\nChoose the correct meaning of the word:\n")
         for opt in options:
             print(opt)
-
-        user_choice = input("\nChoose A, B, C, or D: ").strip().upper()
+        user_choice = input("> ").strip().upper()
         if user_choice == correct_letter:
             points = 1
-            print(f"✅ Correct! You earn {points} point.")
+            print(f"✅ +{points} point")
         else:
             points = 0
-            print(f"❌ Incorrect. The correct answer was {correct_letter}. No points this time.")
+            print(f"❌ Correct answer: {correct_letter}")
 
     new_score = update_score(scores, name, points)
-    print(f"🏅 Your total score: {new_score} points.")
+    print(f"🏅 Total: {new_score} points")
+
+    if new_score >= 30:
+        trigger_bricks_bonus(scores, name)
+
+def trigger_bricks_bonus(scores, name):
+    choice = input("You reached 30 points! Play Brick Bonus? (y/n): ").strip().lower()
+    if choice == "y":
+        print("Launching bonus...")
+        result = subprocess.run(["python3", "bricks.py"], capture_output=True, text=True)
+        lines = result.stdout.splitlines()
+        for line in lines:
+            if "BONUS RESULT" in line:
+                try:
+                    bonus = int(line.split(":")[1].strip())
+                    print(f"+{bonus} bonus points")
+                    update_score(scores, name, bonus)
+                except:
+                    pass
+        scores[name] -= 30
+        save_scores(scores)
 
 def game_loop(name):
     words = load_words()
     shuffle(words)
     scores = load_scores()
-
-    print(f"\nWelcome, {name.title()}! You have {scores.get(name, 0)} points.\n")
-
+    print(f"Welcome, {name.title()}! Total: {scores.get(name, 0)}\n")
     for word_info in words:
         present_challenge(word_info, name, scores, words)
-
-    print(f"\n🏁 Adventure complete! Final score for {name.title()}: {scores[name]} points.")
+    print(f"\nFinal score: {scores[name]}")
 
 if __name__ == "__main__":
     player = get_player_name()
     game_loop(player)
-
