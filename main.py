@@ -1,4 +1,3 @@
-
 import json, subprocess, random
 from pathlib import Path
 from random import shuffle
@@ -72,7 +71,7 @@ def present_challenge(word_info, name, scores, all_words):
 
     if is_close_match(word, correct_def, typed_answer):
         points = 3
-        print(f"✅ +{points} points")
+        print(f"✅ +{points} points  [{word}]")
     else:
         print("❌ Let's try multiple choice.")
         options, correct_letter = generate_mcq_from_words(word, correct_def, all_words)
@@ -121,3 +120,4 @@ def game_loop(name):
 if __name__ == "__main__":
     player = get_player_name()
     game_loop(player)
+
