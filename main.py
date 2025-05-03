@@ -1,4 +1,4 @@
-import json, subprocess
+import json, subprocess, random
 from pathlib import Path
 from random import shuffle
 
@@ -18,9 +18,12 @@ def load_words():
         return json.load(f)
 
 def load_scores():
-    if SCORES_FILE.exists():
-        with open(SCORES_FILE) as f:
-            return json.load(f)
+    try:
+        if SCORES_FILE.exists():
+            with open(SCORES_FILE) as f:
+                return json.load(f)
+    except json.JSONDecodeError:
+        print("⚠️ scores.json is empty or corrupted. Resetting...")
     return {}
 
 def save_scores(scores):
@@ -43,21 +46,21 @@ Is this close enough to count as correct for a 10-year-old learner? Answer only 
 """
     return "yes" in run_ollama(prompt).lower()
 
-def generate_mcq(word, correct_def):
-    prompt = f"""
-Create a multiple choice question to test the meaning of the word '{word}'.
-Include four answer choices (A–D), one correct and three wrong, all plausible.
-Label them clearly and mark the correct answer with '*' at the end of the correct line.
-Example format:
-A) correct answer *
-B) wrong
-C) wrong
-D) wrong
-Just give the options.
-"""
-    return run_ollama(prompt)
+def generate_mcq_from_words(word, correct_def, all_word_defs):
+    # Pick 3 other random definitions from the dictionary, excluding this word
+    distractors = [entry["definition"] for entry in all_word_defs if entry["word"] != word]
+    distractors = random.sample(distractors, min(3, len(distractors)))
 
-def present_challenge(word_info, name, scores):
+    # Combine and shuffle
+    all_options = [{"text": correct_def, "correct": True}] + [{"text": d, "correct": False} for d in distractors]
+    random.shuffle(all_options)
+
+    labels = ["A", "B", "C", "D"]
+    labeled = [f"{label}) {opt['text']}" for label, opt in zip(labels, all_options)]
+    correct_label = labels[[i for i, opt in enumerate(all_options) if opt["correct"]][0]]
+    return labeled, correct_label
+
+def present_challenge(word_info, name, scores, all_words):
     word = word_info["word"]
     correct_def = word_info["definition"]
 
@@ -66,23 +69,24 @@ def present_challenge(word_info, name, scores):
 
     if is_close_match(word, correct_def, typed_answer):
         points = 3
-        print(f"Correct! You earn {points} points.")
+        print(f"✅ Well done! You earn {points} points.")
     else:
-        print("Hmm... not quite right. Let's try multiple choice.")
-        mcq = generate_mcq(word, correct_def)
-        print("\n" + mcq)
+        print("❌ Hmm... not quite right. Let's try multiple choice.")
+        options, correct_letter = generate_mcq_from_words(word, correct_def, all_words)
+        print("\nChoose the correct meaning of the word:\n")
+        for opt in options:
+            print(opt)
 
         user_choice = input("\nChoose A, B, C, or D: ").strip().upper()
-        correct_line = [line for line in mcq.splitlines() if line.strip().endswith("*")]
-        if correct_line and user_choice in correct_line[0]:
+        if user_choice == correct_letter:
             points = 1
-            print(f"Correct! You earn {points} point.")
+            print(f"✅ Correct! You earn {points} point.")
         else:
             points = 0
-            print("Incorrect. No points this time.")
+            print(f"❌ Incorrect. The correct answer was {correct_letter}. No points this time.")
 
     new_score = update_score(scores, name, points)
-    print(f"Your total score: {new_score} points.")
+    print(f"🏅 Your total score: {new_score} points.")
 
 def game_loop(name):
     words = load_words()
@@ -92,9 +96,9 @@ def game_loop(name):
     print(f"\nWelcome, {name.title()}! You have {scores.get(name, 0)} points.\n")
 
     for word_info in words:
-        present_challenge(word_info, name, scores)
+        present_challenge(word_info, name, scores, words)
 
-    print(f"\nAdventure complete! Final score for {name.title()}: {scores[name]} points.")
+    print(f"\n🏁 Adventure complete! Final score for {name.title()}: {scores[name]} points.")
 
 if __name__ == "__main__":
     player = get_player_name()

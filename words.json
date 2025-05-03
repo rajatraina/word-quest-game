@@ -1,5 +1,25 @@
 [
-  { "word": "brave", "definition": "showing courage" },
-  { "word": "mysterious", "definition": "full of secrets or hard to understand" }
+  { "word": "bicameral", "definition": "having two chambers" },
+  { "word": "debrief", "definition": "to question someone" },
+  { "word": "superannuated", "definition": "obsolete" },
+  { "word": "profound", "definition": "deep" },
+  { "word": "prodigious", "definition": "huge" },
+  { "word": "unabashed", "definition": "not embarrassed" },
+  { "word": "semiannual", "definition": "twice a year or half-yearly" },
+  { "word": "symbiotic", "definition": "mutually beneficial" },
+  { "word": "acute", "definition": "sharp" },
+  { "word": "condescend", "definition": "to patronize" },
+  { "word": "circumvent", "definition": "get around" },
+  { "word": "posterior", "definition": "at the back, later" },
+  { "word": "anterior", "definition": "near the front, earlier" },
+  { "word": "clamor", "definition": "outcry" },
+  { "word": "tremulous", "definition": "quivering" },
+  { "word": "aquamarine", "definition": "light bluish-green" },
+  { "word": "proscribed", "definition": "forbidden" },
+  { "word": "incised", "definition": "cut in" },
+  { "word": "singular", "definition": "unique" },
+  { "word": "incredulous", "definition": "skeptical" },
+  { "word": "credo", "definition": "a set of beliefs" },
+  { "word": "regicide", "definition": "the killing of a king" }
 ]
 
