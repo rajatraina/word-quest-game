@@ -71,7 +71,7 @@ def present_challenge(word_info, name, scores, all_words):
 
     if is_close_match(word, correct_def, typed_answer):
         points = 3
-        print(f"✅ +{points} points  [{word}]")
+        print(f"✅ +{points} points  [{correct_def}]")
     else:
         print("❌ Let's try multiple choice.")
         options, correct_letter = generate_mcq_from_words(word, correct_def, all_words)
