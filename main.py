@@ -39,10 +39,17 @@ def update_score(scores, name, points):
     return scores[name]
 
 def is_close_match(word, correct_def, user_def):
+    if len(user_def.strip()) < 3:
+        return False  # Automatically reject very short answers
+
     prompt = f"""
-You're a teacher. The correct definition of the word '{word}' is: '{correct_def}'.
+You are a teacher. The correct definition of the word '{word}' is: '{correct_def}'.
 A student gave this definition: '{user_def}'.
-Is this close enough to count as correct for a 10-year-old learner? Answer only YES or NO.
+
+Only say YES if the student attempted a real definition and it closely matches the correct meaning.
+Do NOT say YES for blank, vague, nonsense, or placeholder answers (like '?', 'idk', 'something', etc).
+
+Respond only with YES or NO.
 """
     return "yes" in run_ollama(prompt).lower()
 
