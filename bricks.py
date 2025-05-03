@@ -6,12 +6,10 @@ import math
 
 pygame.init()
 
-# Game settings
 WIDTH, HEIGHT = 640, 480
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Brick Break Bonus")
 
-# Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 PADDLE_COLOR = (200, 200, 200)
@@ -20,7 +18,6 @@ BRICK_COLOR_1 = (0, 150, 255)
 BRICK_COLOR_2 = (255, 100, 100)
 POWERUP_COLOR = (160, 32, 240)
 
-# Game variables
 FPS = 60
 PADDLE_WIDTH, PADDLE_HEIGHT = 80, 10
 BALL_RADIUS = 8
@@ -63,10 +60,13 @@ def generate_bricks():
 
 def bounce_angle(paddle, ball):
     relative_x = ball.centerx - paddle.centerx
-    norm = relative_x / (paddle.width / 2)
-    angle = norm * (math.pi / 3)  # ±60 degrees max
+    norm = max(-1, min(1, relative_x / (paddle.width / 2)))
+    max_angle = math.radians(60)
+    angle = norm * max_angle
     speed = 6
-    return speed * math.cos(angle), -abs(speed * math.sin(angle))
+    dx = speed * math.sin(angle)
+    dy = -abs(speed * math.cos(angle))
+    return dx, dy
 
 def run_bricks_game():
     paddle = pygame.Rect(WIDTH//2 - PADDLE_WIDTH//2, HEIGHT - 30, PADDLE_WIDTH, PADDLE_HEIGHT)
@@ -74,7 +74,6 @@ def run_bricks_game():
     ball_dx, ball_dy = 4 * random.choice([-1, 1]), -4
 
     bricks = generate_bricks()
-
     clock = pygame.time.Clock()
     bonus_points = 0
     lives = LIVES

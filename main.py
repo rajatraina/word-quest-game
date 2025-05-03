@@ -1,9 +1,13 @@
+
 import json, subprocess, random
 from pathlib import Path
 from random import shuffle
 
 WORDS_FILE = Path("words.json")
 SCORES_FILE = Path("scores.json")
+
+BONUS_COST = 30
+BONUS_CAP = 15
 
 def run_ollama(prompt):
     result = subprocess.run(
@@ -88,25 +92,34 @@ def present_challenge(word_info, name, scores, all_words):
     new_score = update_score(scores, name, points)
     print(f"🏅 Total: {new_score} points")
 
-    if new_score >= 30:
-        trigger_bricks_bonus(scores, name)
+    if new_score >= BONUS_COST:
+        trigger_bonus_game(scores, name)
 
-def trigger_bricks_bonus(scores, name):
-    choice = input("You reached 30 points! Play Brick Bonus? (y/n): ").strip().lower()
-    if choice == "y":
-        print("Launching bonus...")
-        result = subprocess.run(["python3", "bricks.py"], capture_output=True, text=True)
-        lines = result.stdout.splitlines()
-        for line in lines:
-            if "BONUS RESULT" in line:
-                try:
-                    bonus = int(line.split(":")[1].strip())
-                    print(f"+{bonus} bonus points")
-                    update_score(scores, name, bonus)
-                except:
-                    pass
-        scores[name] -= 30
-        save_scores(scores)
+def trigger_bonus_game(scores, name):
+    print("You've reached 30 points! Choose a bonus game:")
+    print("a) Bricks")
+    print("b) Dino Run")
+    print("c) Skip for now")
+    choice = input("> ").strip().lower()
+    if choice not in ["a", "b"]:
+        return
+
+    print("Launching bonus...")
+    game_file = "bricks.py" if choice == "a" else "dino_game.py"
+    result = subprocess.run(["python3", game_file], capture_output=True, text=True)
+    lines = result.stdout.splitlines()
+    for line in lines:
+        if "BONUS RESULT" in line:
+            try:
+                raw_bonus = int(line.split(":")[1].strip())
+                bonus = min(raw_bonus, BONUS_CAP)
+                print(f"+{bonus} bonus points")
+                update_score(scores, name, bonus)
+            except:
+                pass
+
+    scores[name] -= BONUS_COST
+    save_scores(scores)
 
 def game_loop(name):
     words = load_words()
@@ -120,4 +133,3 @@ def game_loop(name):
 if __name__ == "__main__":
     player = get_player_name()
     game_loop(player)
-
