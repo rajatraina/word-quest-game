@@ -83,7 +83,7 @@ def run_dino_game():
                 running = False
 
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP] and on_ground:
+        if (keys[pygame.K_UP] or keys[pygame.K_SPACE]) and on_ground:
             jump = True
         if keys[pygame.K_DOWN]:
             crouch = True
@@ -118,7 +118,7 @@ def run_dino_game():
                 })
             elif roll < 0.9:
                 y_pos = random.choice([
-                    HEIGHT - GROUND_HEIGHT - 40,
+                    HEIGHT - GROUND_HEIGHT - 45,
                     HEIGHT - GROUND_HEIGHT - 60,
                     HEIGHT - GROUND_HEIGHT - 100
                 ])
