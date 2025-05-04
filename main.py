@@ -67,7 +67,7 @@ def ask_question(word, correct_def):
         for i, opt in enumerate(options):
             print(f"{chr(65+i)}) {opt}")
         choice = input("Your choice (A/B/C/D): ").strip().upper()
-        if choice in "ABCD"[:len(options)] and options[ord(choice)-65] == correct_def:
+        if len(choice)>0 and choice in "ABCD"[:len(options)] and options[ord(choice)-65] == correct_def:
             print("✅ +1 point")
             return 1
         else:
@@ -105,6 +105,7 @@ def game_loop(player_name):
 
         if scores[player_name] >= 50 and scores[player_name] % 20 < 5:
             launch_bonus_game()
+            scores[player_name] -= 50
 
 if __name__ == "__main__":
     words = load_words()
