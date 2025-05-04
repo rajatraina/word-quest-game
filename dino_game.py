@@ -31,8 +31,17 @@ def draw_dino(surface, x, y, frame, crouching):
         leg_x = x + (5 if frame == 0 else 20)
         pygame.draw.rect(surface, BLACK, (leg_x, y + 35, 5, 5))
 
+
 def draw_cactus(surface, rect):
-    pygame.draw.rect(surface, (0, 255, 0), rect)
+    main = pygame.Rect(rect.x + 6, rect.y, 8, rect.height)
+    left_arm = pygame.Rect(rect.x + 2, rect.y + rect.height // 3, 6, 10)
+    left_top = pygame.Rect(rect.x + 2, rect.y + rect.height // 3 - 5, 4, 6)
+    right_arm = pygame.Rect(rect.right - 8, rect.y + rect.height // 2, 6, 10)
+    right_top = pygame.Rect(rect.right - 6, rect.y + rect.height // 2 - 5, 4, 6)
+    pygame.draw.rect(surface, (0, 255, 0), main)
+    pygame.draw.rect(surface, (0, 200, 0), main.inflate(-2, -2))
+    for part in [left_arm, left_top, right_arm, right_top]:
+        pygame.draw.rect(surface, (0, 200, 0), part)
     pygame.draw.rect(surface, (0, 200, 0), rect.inflate(-6, -6))
 
 def draw_bird(surface, rect, frame):
