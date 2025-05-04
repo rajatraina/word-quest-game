@@ -83,13 +83,13 @@ def launch_bonus_game():
     choice = input("> ").lower()
     if choice == "a":
         subprocess.run(["python3", "bricks.py"])
-        return 50
+        return 35
     elif choice == "b":
         subprocess.run(["python3", "dino_game.py"])
-        return 50
+        return 35
     elif choice == "c":
         subprocess.run(["python3", "gorilla_game.py"])
-        return 50
+        return 35
     else:
         print("Skipping bonus game.")
         return 0
