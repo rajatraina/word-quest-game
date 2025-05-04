@@ -55,7 +55,7 @@ def ask_question(word, correct_def):
         print("❌ Try defining the word, not repeating it!")
         return 0
 
-    if is_similar_to_definition(player_answer, correct_def):
+    if player_answer.lower() == correct_def.lower() or is_similar_to_definition(player_answer, correct_def):
         print(f"✅ +3 points  [{correct_def}]")
         return 3
     else:
