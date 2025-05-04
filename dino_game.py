@@ -4,15 +4,14 @@ import random
 
 pygame.init()
 
-# Game settings
 WIDTH, HEIGHT = 640, 240
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Dino Run Bonus")
+pygame.display.set_caption("Dino Run - Pixel Style")
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GROUND_HEIGHT = 30
-GRAVITY = 0.5
+GRAVITY = 0.6
 JUMP_VELOCITY = -10
 FPS = 60
 
@@ -22,32 +21,75 @@ def draw_text(text, x, y, color=WHITE):
     img = font.render(text, True, color)
     screen.blit(img, (x, y))
 
+# Draw Dino pixel art frames using rectangles
+def draw_dino(surface, x, y, frame, crouching):
+    color = (200, 200, 200)
+    if crouching:
+        pygame.draw.rect(surface, color, (x, y + 20, 40, 20))  # crouched body
+        pygame.draw.rect(surface, BLACK, (x + 5, y + 25, 5, 5))  # eye
+    else:
+        pygame.draw.rect(surface, color, (x, y, 30, 40))  # body
+        pygame.draw.rect(surface, BLACK, (x + 5, y + 10, 5, 5))  # eye
+        leg_x = x + (5 if frame == 0 else 20)
+        pygame.draw.rect(surface, BLACK, (leg_x, y + 35, 5, 5))  # alternating leg
+
+# Draw cactus
+def draw_cactus(surface, rect):
+    pygame.draw.rect(surface, (0, 255, 0), rect)
+    pygame.draw.rect(surface, (0, 200, 0), rect.inflate(-6, -6))
+
+# Draw bird (flap up/down)
+def draw_bird(surface, rect, frame):
+    color = (255, 100, 100)
+    pygame.draw.ellipse(surface, color, rect)
+    wing_y = rect.y + (5 if frame == 0 else -5)
+    pygame.draw.line(surface, color, (rect.centerx, rect.centery), (rect.centerx + 10, wing_y), 2)
+
 def run_dino_game():
     clock = pygame.time.Clock()
     dino = pygame.Rect(50, HEIGHT - GROUND_HEIGHT - 40, 30, 40)
+    crouch_offset = 15
     dino_vel_y = 0
     on_ground = True
+    is_crouching = False
 
     obstacles = []
     obstacle_timer = 0
     score = 0
+    dino_frame = 0
+    bird_frame = 0
 
     running = True
     while running:
         clock.tick(FPS)
         screen.fill(BLACK)
 
-        jump_requested = False
+        jump = False
+        crouch = False
+        dino_frame = (dino_frame + 1) % 20
+        bird_frame = (bird_frame + 1) % 20
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                jump_requested = True
 
-        if jump_requested and on_ground:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_UP] and on_ground:
+            jump = True
+        if keys[pygame.K_DOWN]:
+            crouch = True
+
+        if jump:
             dino_vel_y = JUMP_VELOCITY
             on_ground = False
+        if crouch and on_ground and not is_crouching:
+            dino.y += crouch_offset
+            dino.height -= crouch_offset
+            is_crouching = True
+        elif not crouch and is_crouching:
+            dino.y -= crouch_offset
+            dino.height += crouch_offset
+            is_crouching = False
 
         dino.y += dino_vel_y
         dino_vel_y += GRAVITY
@@ -55,28 +97,41 @@ def run_dino_game():
             dino.y = HEIGHT - GROUND_HEIGHT - dino.height
             on_ground = True
 
+        # Spawn obstacles
         obstacle_timer += 1
         if obstacle_timer > 60:
             obstacle_timer = 0
-            height = random.randint(20, 50)
-            obstacles.append(pygame.Rect(WIDTH, HEIGHT - GROUND_HEIGHT - height, 20, height))
+            if random.random() < 0.7:
+                height = random.choice([30, 40])
+                obstacles.append({
+                    "rect": pygame.Rect(WIDTH, HEIGHT - GROUND_HEIGHT - height, 20, height),
+                    "type": "cactus"
+                })
+            else:
+                y_pos = random.choice([HEIGHT - GROUND_HEIGHT - 80, HEIGHT - GROUND_HEIGHT - 120])
+                obstacles.append({
+                    "rect": pygame.Rect(WIDTH, y_pos, 30, 20),
+                    "type": "bird"
+                })
 
         for obs in obstacles:
-            obs.x -= 5
-        obstacles = [obs for obs in obstacles if obs.x > -20]
+            obs["rect"].x -= 6
+        obstacles = [obs for obs in obstacles if obs["rect"].x > -40]
 
         for obs in obstacles:
-            if dino.colliderect(obs):
+            if dino.colliderect(obs["rect"]):
                 running = False
 
-        pygame.draw.rect(screen, WHITE, dino)
+        draw_dino(screen, dino.x, dino.y, dino_frame // 10, is_crouching)
         for obs in obstacles:
-            pygame.draw.rect(screen, WHITE, obs)
-        pygame.draw.rect(screen, WHITE, (0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT))
+            if obs["type"] == "cactus":
+                draw_cactus(screen, obs["rect"])
+            else:
+                draw_bird(screen, obs["rect"], bird_frame // 10)
 
+        pygame.draw.rect(screen, WHITE, (0, HEIGHT - GROUND_HEIGHT, WIDTH, GROUND_HEIGHT))
         score += 1
         draw_text(f"Score: {score}", 10, 10)
-
         pygame.display.flip()
 
     pygame.quit()
