@@ -1,3 +1,9 @@
+def is_similar_to_definition(player_answer, correct_def):
+    import ollama
+    prompt = f"Is the following answer similar in meaning to this definition?\nDefinition: {correct_def}\nAnswer: {player_answer}\nRespond only with 'yes' or 'no'."
+    response = ollama.chat(model='mistral', messages=[{"role": "user", "content": prompt}])
+    return 'yes' in response['message']['content'].lower()
+
 import os
 import json
 import random
@@ -49,8 +55,7 @@ def ask_question(word, correct_def):
         print("❌ Try defining the word, not repeating it!")
         return 0
 
-    ratio = difflib.SequenceMatcher(None, player_answer.lower(), correct_def.lower()).ratio()
-    if ratio > 0.75:
+    if is_similar_to_definition(player_answer, correct_def):
         print(f"✅ +3 points  [{correct_def}]")
         return 3
     else:
