@@ -1,99 +1,95 @@
 
-import json, subprocess, random
-from pathlib import Path
-from random import shuffle
+import json
+import os
+import random
+import difflib
+import subprocess
+import sys
 
-WORDS_FILE = Path("words.json")
-SCORES_FILE = Path("scores.json")
-
-BONUS_COST = 30
-BONUS_CAP = 15
-
-def run_ollama(prompt):
-    result = subprocess.run(
-        ["ollama", "run", "mistral"],
-        input=prompt.encode(),
-        capture_output=True
-    )
-    return result.stdout.decode().strip()
+SCORE_FILE = "scores.json"
+WORD_FILE = "words.json"
+BONUS_THRESHOLD = 30
+BONUS_MAX = 15
 
 def load_words():
-    with open(WORDS_FILE) as f:
+    with open(WORD_FILE) as f:
         return json.load(f)
 
 def load_scores():
-    try:
-        if SCORES_FILE.exists():
-            with open(SCORES_FILE) as f:
-                return json.load(f)
-    except json.JSONDecodeError:
-        print("⚠️ scores.json is empty or corrupted. Resetting...")
-    return {}
+    if not os.path.exists(SCORE_FILE):
+        return {}
+    with open(SCORE_FILE) as f:
+        return json.load(f)
 
 def save_scores(scores):
-    with open(SCORES_FILE, "w") as f:
+    with open(SCORE_FILE, "w") as f:
         json.dump(scores, f, indent=2)
 
-def get_player_name():
-    return input("Explorer name: ").strip().lower()
-
-def update_score(scores, name, points):
-    scores[name] = scores.get(name, 0) + points
-    save_scores(scores)
-    return scores[name]
-
-def is_close_match(word, correct_def, user_def):
-    if len(user_def.strip()) < 3:
+def is_similar(a, b):
+    import subprocess
+    prompt = f"Are these two definitions equivalent meanings? A: '{a}' B: '{b}'\nAnswer only yes or no."
+    try:
+        result = subprocess.run(
+            ["ollama", "run", "mistral"],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        response = result.stdout.strip().lower()
+        return "yes" in response
+    except Exception as e:
+        print("⚠️ Ollama check failed:", e)
         return False
-    prompt = f"""
-You are a teacher. The correct definition of the word '{word}' is: '{correct_def}'.
-A student gave this definition: '{user_def}'.
+    import subprocess, json
+    prompt = f"Are these two definitions equivalent meanings? A: '{a}' B: '{b}'\nAnswer only yes or no."
+    try:
+        result = subprocess.run(
+            ["ollama", "run", "mistral", "--json"],
+            input=json.dumps({"prompt": prompt}),
+            text=True, capture_output=True
+        )
+        response = result.stdout.strip().lower()
+        return 'yes' in response
+    except Exception:
+        return False  # Fallback
+    a = a.lower().strip()
+    b = b.lower().strip()
+    if a in b or b in a:
+        return True
+    return difflib.SequenceMatcher(None, a, b).ratio() > 0.7
+    return difflib.SequenceMatcher(None, a.lower(), b.lower()).ratio() > 0.7
 
-Only say YES if the student attempted a real definition and it closely matches the correct meaning.
-Do NOT say YES for blank, vague, nonsense, or placeholder answers (like '?', 'idk', 'something', etc).
-
-Respond only with YES or NO.
-"""
-    return "yes" in run_ollama(prompt).lower()
-
-def generate_mcq_from_words(word, correct_def, all_word_defs):
-    distractors = [entry["definition"] for entry in all_word_defs if entry["word"] != word]
-    distractors = random.sample(distractors, min(3, len(distractors)))
-    all_options = [{"text": correct_def, "correct": True}] + [{"text": d, "correct": False} for d in distractors]
-    random.shuffle(all_options)
-    labels = ["A", "B", "C", "D"]
-    labeled = [f"{label}) {opt['text']}" for label, opt in zip(labels, all_options)]
-    correct_label = labels[[i for i, opt in enumerate(all_options) if opt["correct"]][0]]
-    return labeled, correct_label
-
-def present_challenge(word_info, name, scores, all_words):
+def present_challenge(word_info, name, scores, words):
     word = word_info["word"]
     correct_def = word_info["definition"]
 
-    print(f"\n{word.upper()}")
-    typed_answer = input("> ").strip()
+    print("\n----------------------------------")
+    print(f"Define: {word.upper()}")
+    player_answer = input("> ").strip()
 
-    if is_close_match(word, correct_def, typed_answer):
-        points = 3
+    if player_answer.lower() == word.lower():
+        print("🚫 You can't just enter the word! Try to define it.")
+        return
+
+    if is_similar(player_answer, correct_def):
+        points = 3 if player_answer.lower() == correct_def.lower() else 2
+        scores[name] += points
         print(f"✅ +{points} points  [{correct_def}]")
     else:
-        print("❌ Let's try multiple choice.")
-        options, correct_letter = generate_mcq_from_words(word, correct_def, all_words)
-        for opt in options:
-            print(opt)
-        user_choice = input("> ").strip().upper()
-        if user_choice == correct_letter:
-            points = 1
-            print(f"✅ +{points} point")
+        print("❌ Not quite. Let's try a multiple choice!")
+        options = [correct_def]
+        all_defs = [w['definition'] for w in words if w['definition'] != correct_def]
+        options += random.sample(all_defs, min(3, len(all_defs)))
+        random.shuffle(options)
+        for i, opt in enumerate(options):
+            print(f"{chr(65+i)}) {opt}")
+        mcq_answer = input("> ").strip().upper()
+        if mcq_answer in [chr(65+i) for i in range(len(options))] and options[ord(mcq_answer) - 65] == correct_def:
+            scores[name] += 1
+            print(f"✅ +1 point  [{correct_def}]")
         else:
-            points = 0
-            print(f"❌ Correct answer: {correct_letter}")
-
-    new_score = update_score(scores, name, points)
-    print(f"🏅 Total: {new_score} points")
-
-    if new_score >= BONUS_COST:
-        trigger_bonus_game(scores, name)
+            print(f"❌ The correct answer was: {correct_def}")
 
 def trigger_bonus_game(scores, name):
     print("You've reached 30 points! Choose a bonus game:")
@@ -101,35 +97,43 @@ def trigger_bonus_game(scores, name):
     print("b) Dino Run")
     print("c) Skip for now")
     choice = input("> ").strip().lower()
-    if choice not in ["a", "b"]:
+    if choice == "a":
+        game_file = "bricks.py"
+    elif choice == "b":
+        game_file = "dino_game.py"
+    else:
         return
 
     print("Launching bonus...")
-    game_file = "bricks.py" if choice == "a" else "dino_game.py"
-    result = subprocess.run(["python3", game_file], capture_output=True, text=True)
-    lines = result.stdout.splitlines()
-    for line in lines:
-        if "BONUS RESULT" in line:
-            try:
-                raw_bonus = int(line.split(":")[1].strip())
-                bonus = min(raw_bonus, BONUS_CAP)
-                print(f"+{bonus} bonus points")
-                update_score(scores, name, bonus)
-            except:
-                pass
-
-    scores[name] -= BONUS_COST
-    save_scores(scores)
+    try:
+        result = subprocess.run([sys.executable, game_file], text=True, capture_output=True)
+        for line in result.stdout.splitlines():
+            if "BONUS RESULT:" in line:
+                bonus = int(line.strip().split(":")[-1])
+                bonus = min(bonus, BONUS_MAX)
+                print(f"🎁 Bonus: +{bonus} points!")
+                scores[name] += bonus
+                break
+    except Exception as e:
+        print("⚠️ Could not launch bonus game:", e)
 
 def game_loop(name):
     words = load_words()
-    shuffle(words)
     scores = load_scores()
-    print(f"Welcome, {name.title()}! Total: {scores.get(name, 0)}\n")
-    for word_info in words:
+    if name not in scores:
+        scores[name] = 0
+
+    while True:
+        word_info = random.choice(words)
         present_challenge(word_info, name, scores, words)
-    print(f"\nFinal score: {scores[name]}")
+        print(f"⭐ Score: {scores[name]}")
+        print("----------------------------------\n")
+        save_scores(scores)
+
+        if scores[name] >= BONUS_THRESHOLD:
+            trigger_bonus_game(scores, name)
+            save_scores(scores)
 
 if __name__ == "__main__":
-    player = get_player_name()
-    game_loop(player)
+    name = input("Enter your name, explorer: ").strip().lower()
+    game_loop(name)
