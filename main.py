@@ -8,7 +8,7 @@ import speech_recognition as sr
 
 SCORE_FILE = "scores.json"
 WORD_FILE = "words.json"
-BONUS_THRESHOLD = 30
+BONUS_THRESHOLD = 50
 BONUS_MAX = 15
 
 def load_words():
@@ -53,7 +53,7 @@ def present_challenge(word_info, name, scores, words):
     with sr.Microphone() as source:
         try:
             print("🎙️ Listening...")
-            audio = r.listen(source, timeout=5)
+            audio = r.listen(source, timeout=10)
             sr.AudioData.FLAC_CONVERTER = "/opt/homebrew/bin/flac"
             player_answer = r.recognize_google(audio).strip()
             print(f"🗣️ You said: {player_answer}")
@@ -86,7 +86,7 @@ def present_challenge(word_info, name, scores, words):
     print("----------------------------------\n")
 
 def trigger_bonus_game(scores, name):
-    print("You've reached 30 points! Choose a bonus game:")
+    print("You've reached 50 points! Choose a bonus game:")
     print("a) Bricks")
     print("b) Dino Run")
     print("c) Skip for now")
