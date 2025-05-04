@@ -83,12 +83,16 @@ def launch_bonus_game():
     choice = input("> ").lower()
     if choice == "a":
         subprocess.run(["python3", "bricks.py"])
+        return 50
     elif choice == "b":
         subprocess.run(["python3", "dino_game.py"])
+        return 50
     elif choice == "c":
         subprocess.run(["python3", "gorilla_game.py"])
+        return 50
     else:
         print("Skipping bonus game.")
+        return 0
 
 def game_loop(player_name):
     global words
@@ -104,8 +108,8 @@ def game_loop(player_name):
         print(f"Total score: {scores[player_name]}")
 
         if scores[player_name] >= 50 and scores[player_name] % 20 < 5:
-            launch_bonus_game()
-            scores[player_name] -= 50
+            cost = launch_bonus_game()
+            scores[player_name] -= cost
 
 if __name__ == "__main__":
     words = load_words()
