@@ -149,7 +149,7 @@ def run_bricks_game():
 
         draw_text(f"Score: {bonus_points}  Lives: {lives}", 10, 10)
         if power_up_active:
-            draw_text("🔮 Power-up: Wide Paddle!", WIDTH - 220, 10, POWERUP_COLOR)
+            draw_text("🔮 Power-up: Wide Paddle!", WIDTH - 220, 10, color=POWERUP_COLOR)
 
         pygame.display.flip()
 
