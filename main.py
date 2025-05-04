@@ -2,9 +2,9 @@
 import json
 import os
 import random
-import difflib
 import subprocess
 import sys
+import speech_recognition as sr
 
 SCORE_FILE = "scores.json"
 WORD_FILE = "words.json"
@@ -26,7 +26,6 @@ def save_scores(scores):
         json.dump(scores, f, indent=2)
 
 def is_similar(a, b):
-    import subprocess
     prompt = f"Are these two definitions equivalent meanings? A: '{a}' B: '{b}'\nAnswer only yes or no."
     try:
         result = subprocess.run(
@@ -48,7 +47,18 @@ def present_challenge(word_info, name, scores, words):
 
     print("\n----------------------------------")
     print(f"Define: {word.upper()}")
-    player_answer = input("> ").strip()
+
+    print("🎤 Press Enter to type your answer, or just start speaking...")
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        try:
+            print("🎙️ Listening...")
+            audio = r.listen(source, timeout=5)
+            sr.AudioData.FLAC_CONVERTER = "/opt/homebrew/bin/flac"
+            player_answer = r.recognize_google(audio).strip()
+            print(f"🗣️ You said: {player_answer}")
+        except (sr.UnknownValueError, sr.RequestError, sr.WaitTimeoutError):
+            player_answer = input("✍️ Type your answer instead: ").strip()
 
     if player_answer.lower() == word.lower():
         print("🚫 You can't just enter the word! Try to define it.")
