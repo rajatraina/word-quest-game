@@ -41,24 +41,6 @@ def is_similar(a, b):
     except Exception as e:
         print("⚠️ Ollama check failed:", e)
         return False
-    import subprocess, json
-    prompt = f"Are these two definitions equivalent meanings? A: '{a}' B: '{b}'\nAnswer only yes or no."
-    try:
-        result = subprocess.run(
-            ["ollama", "run", "mistral", "--json"],
-            input=json.dumps({"prompt": prompt}),
-            text=True, capture_output=True
-        )
-        response = result.stdout.strip().lower()
-        return 'yes' in response
-    except Exception:
-        return False  # Fallback
-    a = a.lower().strip()
-    b = b.lower().strip()
-    if a in b or b in a:
-        return True
-    return difflib.SequenceMatcher(None, a, b).ratio() > 0.7
-    return difflib.SequenceMatcher(None, a.lower(), b.lower()).ratio() > 0.7
 
 def present_challenge(word_info, name, scores, words):
     word = word_info["word"]
@@ -90,6 +72,8 @@ def present_challenge(word_info, name, scores, words):
             print(f"✅ +1 point  [{correct_def}]")
         else:
             print(f"❌ The correct answer was: {correct_def}")
+    print(f"⭐ Score: {scores[name]}")
+    print("----------------------------------\n")
 
 def trigger_bonus_game(scores, name):
     print("You've reached 30 points! Choose a bonus game:")
@@ -112,7 +96,7 @@ def trigger_bonus_game(scores, name):
                 bonus = int(line.strip().split(":")[-1])
                 bonus = min(bonus, BONUS_MAX)
                 print(f"🎁 Bonus: +{bonus} points!")
-                scores[name] += bonus
+                scores[name] = max(0, scores[name] - BONUS_THRESHOLD + bonus)
                 break
     except Exception as e:
         print("⚠️ Could not launch bonus game:", e)
@@ -126,8 +110,6 @@ def game_loop(name):
     while True:
         word_info = random.choice(words)
         present_challenge(word_info, name, scores, words)
-        print(f"⭐ Score: {scores[name]}")
-        print("----------------------------------\n")
         save_scores(scores)
 
         if scores[name] >= BONUS_THRESHOLD:
