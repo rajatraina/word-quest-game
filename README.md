@@ -1,8 +1,8 @@
 
-- To enable speech recognition
+To enable speech recognition:
 
-brew install portaudio
-pip3 install pyaudio
-pip3 install SpeechRecognition
-brew install flac
+- brew install portaudio
+- pip3 install pyaudio
+- pip3 install SpeechRecognition
+- brew install flac
 
