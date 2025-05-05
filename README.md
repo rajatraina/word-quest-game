@@ -1,4 +1,5 @@
-# speech recognition
+
+- To enable speech recognition
 
 brew install portaudio
 pip3 install pyaudio
