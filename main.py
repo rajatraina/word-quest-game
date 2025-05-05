@@ -114,7 +114,7 @@ def game_loop(player_name):
     user_word_scores = word_scores.get(player_name, {})
     
     while True:
-        sorted_words = sorted(words, key=lambda w: user_word_scores.get(w['word'], 0))
+        sorted_words = sorted(words, key=lambda w: user_word_scores.get(w['word'], -float('inf')))
         word_info = random.choice(sorted_words[:10])
         points = ask_question(word_info["word"], word_info["definition"])
         scores[player_name] += points
