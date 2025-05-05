@@ -1,3 +1,5 @@
+word_scores = {}
+
 def is_similar_to_definition(player_answer, correct_def):
     import ollama
     prompt = f"Is the following answer similar in meaning to this definition?\nDefinition: {correct_def}\nAnswer: {player_answer}\nRespond only with 'yes' or 'no'."
@@ -25,16 +27,24 @@ def load_words():
         return json.load(f)
 
 def load_scores():
+    global word_scores
     if not os.path.exists(SCORES_FILE):
         return {}
     with open(SCORES_FILE, "r") as f:
-        return json.load(f)
+        data = json.load(f)
+        word_scores = data.get('word_scores', {})
+        return data
 
 def save_scores(scores):
+    global word_scores
     with open(SCORES_FILE, "w") as f:
-        json.dump(scores, f)
+        json.dump({**scores, 'word_scores': word_scores}, f)
 
 def ask_question(word, correct_def):
+    global word_scores
+    user_scores = word_scores.setdefault(player_name, {})
+    user_scores[word] = user_scores.get(word, 0)
+
     print(f"\nDefine: {word.upper()}")
     if voice_enabled:
         print("\n🎤 Press Enter to type your answer, or just start speaking...")
@@ -57,6 +67,7 @@ def ask_question(word, correct_def):
 
     if player_answer.lower() == correct_def.lower() or is_similar_to_definition(player_answer, correct_def):
         print(f"✅ +3 points  [{correct_def}]")
+        user_scores[word] += 3
         return 3
     else:
         print("Incorrect. Choose the correct definition:")
@@ -69,6 +80,7 @@ def ask_question(word, correct_def):
         choice = input("Your choice (A/B/C/D): ").strip().upper()
         if len(choice)>0 and choice in "ABCD"[:len(options)] and options[ord(choice)-65] == correct_def:
             print("✅ +1 point")
+            user_scores[word] += 1
             return 1
         else:
             print(f"❌ The correct answer was: {correct_def}")
@@ -99,9 +111,11 @@ def game_loop(player_name):
     scores = load_scores()
     if player_name not in scores:
         scores[player_name] = 0
-
+    user_word_scores = word_scores.get(player_name, {})
+    
     while True:
-        word_info = random.choice(words)
+        sorted_words = sorted(words, key=lambda w: user_word_scores.get(w['word'], 0))
+        word_info = random.choice(sorted_words[:10])
         points = ask_question(word_info["word"], word_info["definition"])
         scores[player_name] += points
         save_scores(scores)
@@ -113,5 +127,5 @@ def game_loop(player_name):
 
 if __name__ == "__main__":
     words = load_words()
-    name = input("Enter your name, explorer: ").strip().lower()
-    game_loop(name)
+    player_name = input("Enter your name, explorer: ").strip().lower()
+    game_loop(player_name)
