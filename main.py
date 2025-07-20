@@ -65,7 +65,7 @@ def ask_question(word, correct_def):
         print("❌ Try defining the word, not repeating it!")
         return 0
 
-    if len(player.answer.lower())>2 and (player_answer.lower() == correct_def.lower() or is_similar_to_definition(player_answer, correct_def)):
+    if len(player_answer.lower()) > 2 and (player_answer.lower() == correct_def.lower() or is_similar_to_definition(player_answer, correct_def)):
         print(f"✅ +3 points  [{correct_def}]")
         user_scores[word] += 3
         return 3
