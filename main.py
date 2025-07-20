@@ -43,7 +43,6 @@ def save_scores(scores):
 def ask_question(word, correct_def):
     global word_scores
     user_scores = word_scores.setdefault(player_name, {})
-    user_scores[word] = user_scores.get(word, 0)
 
     print(f"\nDefine: {word.upper()}")
     if voice_enabled:
@@ -67,7 +66,7 @@ def ask_question(word, correct_def):
 
     if len(player_answer.lower()) > 2 and (player_answer.lower() == correct_def.lower() or is_similar_to_definition(player_answer, correct_def)):
         print(f"✅ +3 points  [{correct_def}]")
-        user_scores[word] += 3
+        user_scores[word] = user_scores.get(word, 0) + 3
         return 3
     else:
         print("Incorrect. Choose the correct definition:")
@@ -80,10 +79,11 @@ def ask_question(word, correct_def):
         choice = input("Your choice (A/B/C/D): ").strip().upper()
         if len(choice)>0 and choice in "ABCD"[:len(options)] and options[ord(choice)-65] == correct_def:
             print("✅ +1 point")
-            user_scores[word] += 1
+            user_scores[word] = user_scores.get(word, 0) + 1
             return 1
         else:
             print(f"❌ The correct answer was: {correct_def}")
+            user_scores[word] = user_scores.get(word, 0)
             return 0
 
 def launch_bonus_game():
