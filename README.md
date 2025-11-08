@@ -51,22 +51,51 @@ This interactive learning game combines vocabulary practice with gamification. T
 
 ## Usage
 
-Run the main game:
+### Web Interface (Default)
+
+Run the web server:
 ```bash
 python3 main.py
 ```
 
-For voice input mode:
+Then open your browser to: `http://localhost:5000`
+
+The web interface provides:
+- Clickable buttons for multiple choice answers
+- Text input box for definitions
+- Visual feedback with color-coded responses
+- Real-time score updates
+
+### Command-Line Interface
+
+For the traditional CLI experience:
 ```bash
-python3 main.py --voice
+python3 main.py --cli
 ```
+
+For voice input mode (CLI only):
+```bash
+python3 main.py --cli --voice
+```
+
+Enable bonus games:
+```bash
+python3 main.py --cli --games
+```
+
+### Command-Line Options
+
+- `--cli` - Use command-line interface instead of web UI
+- `--voice` - Enable voice input (CLI only)
+- `--games` - Enable bonus games at milestone scores
+- `--port PORT` - Set port for web server (default: 5000)
 
 The game will:
 1. Ask for your name to track your progress
 2. Present words and ask for their definitions
 3. Award points based on correctness (3 points for correct definition, 1 point for correct multiple choice)
 4. Prioritize words you've struggled with
-5. Unlock bonus games at 50 points and every 20 points thereafter
+5. Unlock bonus games at 50 points and every 20 points thereafter (if `--games` is enabled)
 
 ## Scoring
 

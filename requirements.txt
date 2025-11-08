@@ -1,3 +1,5 @@
 ollama
 pygame
 SpeechRecognition
+pyaudio
+flask
