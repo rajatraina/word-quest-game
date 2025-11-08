@@ -2,9 +2,57 @@ word_scores = {}
 
 def is_similar_to_definition(player_answer, correct_def):
     import ollama
-    prompt = f"Is the following answer similar in meaning to this definition?\nDefinition: {correct_def}\nAnswer: {player_answer}\nRespond only with 'yes' or 'no'."
-    response = ollama.chat(model='mistral', messages=[{"role": "user", "content": prompt}])
-    return 'yes' in response['message']['content'].lower()
+    from ollama._types import ResponseError
+    
+    # Try to use Ollama to check similarity
+    model_to_use = None
+    
+    try:
+        # First, try to list available models to find the best one
+        try:
+            models_response = ollama.list()
+            # The response has a 'models' attribute with Model objects
+            available_models = [m.model for m in models_response.models] if hasattr(models_response, 'models') else []
+            
+            if available_models:
+                # Try common model names in order of preference
+                # Note: model names may include tags like "mistral:7b-instruct"
+                model_names = ['mistral', 'llama2', 'llama3', 'phi', 'gemma']
+                found_model = None
+                
+                for model_name in model_names:
+                    for available in available_models:
+                        # Check if model name (with or without tag) matches
+                        if model_name in available.lower():
+                            found_model = available
+                            break
+                    if found_model:
+                        break
+                
+                # If no preferred model found, use the first available
+                if found_model:
+                    model_to_use = found_model
+                else:
+                    model_to_use = available_models[0]
+            else:
+                print("⚠️  No Ollama models found. Install one with: ollama pull mistral")
+                return False
+        except Exception as e:
+            print(f"⚠️  Could not list Ollama models: {e}")
+            return False
+        
+        # Use the found model
+        prompt = f"Is the following answer similar in meaning to this definition?\nDefinition: {correct_def}\nAnswer: {player_answer}\nRespond only with 'yes' or 'no'."
+        response = ollama.chat(model=model_to_use, messages=[{"role": "user", "content": prompt}])
+        return 'yes' in response['message']['content'].lower()
+    
+    except ResponseError as e:
+        if 'not found' in str(e).lower() or '404' in str(e):
+            print(f"⚠️  Model '{model_to_use}' not found. Install it with: ollama pull mistral")
+        return False
+    except Exception:
+        # Silently fail - will fall back to multiple choice
+        return False
 
 import os
 import json
@@ -16,8 +64,10 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--voice', action='store_true', help='Enable voice input')
+parser.add_argument('--games', action='store_true', help='Enable bonus games at milestone scores')
 args = parser.parse_args()
 voice_enabled = args.voice
+games_enabled = args.games
 
 WORDS_FILE = "words.json"
 SCORES_FILE = "scores.json"
@@ -121,7 +171,7 @@ def game_loop(player_name):
         save_scores(scores)
         print(f"Total score: {scores[player_name]}")
 
-        if scores[player_name] >= 50 and scores[player_name] % 20 < 5:
+        if games_enabled and scores[player_name] >= 50 and scores[player_name] % 20 < 5:
             cost = launch_bonus_game()
             scores[player_name] -= cost
 
