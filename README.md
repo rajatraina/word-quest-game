@@ -12,7 +12,7 @@ This interactive learning game combines vocabulary practice with gamification. T
 
 ## Files
 
-- **main.py** - The main game loop that manages word quizzes, scoring, and bonus game unlocks. Handles both text and voice input (optional).
+- **main.py** - The main game loop that manages word quizzes, scoring, and bonus game unlocks.
 - **words.json** - Contains the dictionary of words and their definitions that players will learn.
 - **bricks.py** - A brick-breaker bonus game where players break bricks with a paddle and ball.
 - **dino_game.py** - A dino run bonus game where players jump over obstacles.
@@ -26,9 +26,6 @@ This interactive learning game combines vocabulary practice with gamification. T
    - Run `ollama pull mistral` to download the model
    - Ensure the Ollama server is running before starting the game
 3. **Pygame** - Required for the bonus games (installed via requirements.txt)
-4. **Speech Recognition (Optional)** - For voice input support
-   - On macOS: `brew install portaudio` and `brew install flac`
-   - Then install: `pip3 install pyaudio SpeechRecognition`
 
 ## Installation
 
@@ -43,12 +40,6 @@ This interactive learning game combines vocabulary practice with gamification. T
    ollama pull mistral
    ```
 
-3. (Optional) For voice input support, install system dependencies:
-   ```bash
-   brew install portaudio flac
-   pip3 install pyaudio SpeechRecognition
-   ```
-
 ## Usage
 
 ### Web Interface (Default)
@@ -59,6 +50,21 @@ python3 main.py
 ```
 
 Then open your browser to: `http://localhost:5000`
+
+**Accessing from Other Devices on the Same Network:**
+The server is configured to accept connections from other devices on the same network (WiFi, Apple Family, etc.). To access from another MacBook, iPad, or any device on the same network:
+
+1. Find the IP address of the machine running the server:
+   - **macOS**: Open Terminal and run `ipconfig getifaddr en0` (or `en1` for WiFi)
+   - **Linux**: Run `hostname -I` or `ip addr show`
+   - The server will also display the IP address when it starts
+
+2. On the other device, open a browser and go to: `http://[IP_ADDRESS]:5000`
+   - For example: `http://192.168.1.100:5000`
+
+3. Make sure both devices are on the same WiFi network
+
+**Note:** You may need to allow incoming connections through your firewall if you encounter connection issues.
 
 The web interface provides:
 - Clickable buttons for multiple choice answers
@@ -73,11 +79,6 @@ For the traditional CLI experience:
 python3 main.py --cli
 ```
 
-For voice input mode (CLI only):
-```bash
-python3 main.py --cli --voice
-```
-
 Enable bonus games:
 ```bash
 python3 main.py --cli --games
@@ -86,7 +87,6 @@ python3 main.py --cli --games
 ### Command-Line Options
 
 - `--cli` - Use command-line interface instead of web UI
-- `--voice` - Enable voice input (CLI only)
 - `--games` - Enable bonus games at milestone scores
 - `--port PORT` - Set port for web server (default: 5000)
 

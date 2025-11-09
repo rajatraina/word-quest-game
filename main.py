@@ -7,6 +7,7 @@ import random
 import subprocess
 import argparse
 import threading
+import socket
 from math import gcd
 from flask import Flask, render_template, jsonify, request
 
@@ -22,6 +23,75 @@ NAME_TO_GRADE = {
     'rajat': 12,
     'penka': 12
 }
+
+# Periodic table elements for leveling system
+# Each element requires 25 points to unlock (starting at 0 for Hydrogen)
+PERIODIC_ELEMENTS = [
+    {'symbol': 'H', 'name': 'Hydrogen', 'atomic_number': 1, 'atomic_mass': 1.008, 
+     'electron_config': '1s¹', 'facts': ['lightest element', 'most abundant in universe', 'used in rocket fuel', 'makes up water molecules']},
+    {'symbol': 'He', 'name': 'Helium', 'atomic_number': 2, 'atomic_mass': 4.003, 
+     'electron_config': '1s²', 'facts': ['second lightest element', 'used in balloons', 'makes voice sound funny', 'found in stars']},
+    {'symbol': 'Li', 'name': 'Lithium', 'atomic_number': 3, 'atomic_mass': 6.941, 
+     'electron_config': '[He]2s¹', 'facts': ['lightest metal', 'used in batteries', 'found in phones', 'treats bipolar disorder']},
+    {'symbol': 'Be', 'name': 'Beryllium', 'atomic_number': 4, 'atomic_mass': 9.012, 
+     'electron_config': '[He]2s²', 'facts': ['very light metal', 'used in X-ray machines', 'found in emeralds', 'toxic to humans']},
+    {'symbol': 'B', 'name': 'Boron', 'atomic_number': 5, 'atomic_mass': 10.81, 
+     'electron_config': '[He]2s²2p¹', 'facts': ['used in glass', 'found in detergents', 'makes things stronger', 'used in nuclear reactors']},
+    {'symbol': 'C', 'name': 'Carbon', 'atomic_number': 6, 'atomic_mass': 12.01, 
+     'electron_config': '[He]2s²2p²', 'facts': ['basis of all life', 'found in diamonds', 'makes up coal', 'used in pencils']},
+    {'symbol': 'N', 'name': 'Nitrogen', 'atomic_number': 7, 'atomic_mass': 14.01, 
+     'electron_config': '[He]2s²2p³', 'facts': ['makes up 78% of air', 'used in fertilizers', 'keeps food frozen', 'found in DNA']},
+    {'symbol': 'O', 'name': 'Oxygen', 'atomic_number': 8, 'atomic_mass': 16.00, 
+     'electron_config': '[He]2s²2p⁴', 'facts': ['we need it to breathe', 'makes up 21% of air', 'found in water', 'used in hospitals']},
+    {'symbol': 'F', 'name': 'Fluorine', 'atomic_number': 9, 'atomic_mass': 19.00, 
+     'electron_config': '[He]2s²2p⁵', 'facts': ['most reactive element', 'used in toothpaste', 'prevents cavities', 'very dangerous']},
+    {'symbol': 'Ne', 'name': 'Neon', 'atomic_number': 10, 'atomic_mass': 20.18, 
+     'electron_config': '[He]2s²2p⁶', 'facts': ['used in bright signs', 'glows red-orange', 'found in advertising', 'noble gas']},
+    {'symbol': 'Na', 'name': 'Sodium', 'atomic_number': 11, 'atomic_mass': 22.99, 
+     'electron_config': '[Ne]3s¹', 'facts': ['found in table salt', 'explodes in water', 'used in streetlights', 'keeps us healthy']},
+    {'symbol': 'Mg', 'name': 'Magnesium', 'atomic_number': 12, 'atomic_mass': 24.31, 
+     'electron_config': '[Ne]3s²', 'facts': ['burns very bright', 'found in fireworks', 'used in medicine', 'makes bones strong']},
+    {'symbol': 'Al', 'name': 'Aluminum', 'atomic_number': 13, 'atomic_mass': 26.98, 
+     'electron_config': '[Ne]3s²3p¹', 'facts': ['lightweight metal', 'used in cans', 'found in airplanes', 'recyclable']},
+    {'symbol': 'Si', 'name': 'Silicon', 'atomic_number': 14, 'atomic_mass': 28.09, 
+     'electron_config': '[Ne]3s²3p²', 'facts': ['used in computers', 'found in sand', 'makes glass', 'second most common element']},
+    {'symbol': 'P', 'name': 'Phosphorus', 'atomic_number': 15, 'atomic_mass': 30.97, 
+     'electron_config': '[Ne]3s²3p³', 'facts': ['glows in the dark', 'found in matches', 'used in fertilizers', 'important for life']},
+    {'symbol': 'S', 'name': 'Sulfur', 'atomic_number': 16, 'atomic_mass': 32.07, 
+     'electron_config': '[Ne]3s²3p⁴', 'facts': ['smells like rotten eggs', 'used in gunpowder', 'found in volcanoes', 'makes things yellow']},
+    {'symbol': 'Cl', 'name': 'Chlorine', 'atomic_number': 17, 'atomic_mass': 35.45, 
+     'electron_config': '[Ne]3s²3p⁵', 'facts': ['used in pools', 'kills bacteria', 'found in bleach', 'poisonous gas']},
+    {'symbol': 'Ar', 'name': 'Argon', 'atomic_number': 18, 'atomic_mass': 39.95, 
+     'electron_config': '[Ne]3s²3p⁶', 'facts': ['used in light bulbs', 'noble gas', 'found in air', 'prevents oxidation']},
+    {'symbol': 'K', 'name': 'Potassium', 'atomic_number': 19, 'atomic_mass': 39.10, 
+     'electron_config': '[Ar]4s¹', 'facts': ['found in bananas', 'used in fertilizers', 'explodes in water', 'keeps heart healthy']},
+    {'symbol': 'Ca', 'name': 'Calcium', 'atomic_number': 20, 'atomic_mass': 40.08, 
+     'electron_config': '[Ar]4s²', 'facts': ['makes bones strong', 'found in milk', 'used in chalk', 'important for teeth']},
+    {'symbol': 'Fe', 'name': 'Iron', 'atomic_number': 26, 'atomic_mass': 55.85, 
+     'electron_config': '[Ar]3d⁶4s²', 'facts': ['used in steel', 'found in blood', 'makes things strong', 'most common metal']},
+    {'symbol': 'Cu', 'name': 'Copper', 'atomic_number': 29, 'atomic_mass': 63.55, 
+     'electron_config': '[Ar]3d¹⁰4s¹', 'facts': ['used in wires', 'found in pennies', 'conducts electricity', 'turns green when old']},
+    {'symbol': 'Zn', 'name': 'Zinc', 'atomic_number': 30, 'atomic_mass': 65.38, 
+     'electron_config': '[Ar]3d¹⁰4s²', 'facts': ['used in batteries', 'prevents rust', 'found in sunscreen', 'important for health']},
+    {'symbol': 'Ag', 'name': 'Silver', 'atomic_number': 47, 'atomic_mass': 107.87, 
+     'electron_config': '[Kr]4d¹⁰5s¹', 'facts': ['shiny metal', 'used in jewelry', 'conducts electricity best', 'used in photography']},
+    {'symbol': 'Au', 'name': 'Gold', 'atomic_number': 79, 'atomic_mass': 196.97, 
+     'electron_config': '[Xe]4f¹⁴5d¹⁰6s¹', 'facts': ['precious metal', 'used in jewelry', 'never tarnishes', 'found in electronics']},
+    {'symbol': 'U', 'name': 'Uranium', 'atomic_number': 92, 'atomic_mass': 238.03, 
+     'electron_config': '[Rn]5f³6d¹7s²', 'facts': ['used in nuclear power', 'very heavy', 'radioactive', 'found in Earth\'s crust']},
+]
+
+POINTS_PER_LEVEL = 25  # Every 25 points unlocks a new element level
+
+def get_element_level(score):
+    """Get the element level based on score. Returns element info dict."""
+    level_index = min(score // POINTS_PER_LEVEL, len(PERIODIC_ELEMENTS) - 1)
+    element = PERIODIC_ELEMENTS[level_index].copy()
+    element['level'] = level_index + 1
+    element['score_required'] = level_index * POINTS_PER_LEVEL
+    element['next_level_score'] = (level_index + 1) * POINTS_PER_LEVEL if level_index < len(PERIODIC_ELEMENTS) - 1 else None
+    element['progress'] = (score - element['score_required']) / POINTS_PER_LEVEL if element['next_level_score'] else 1.0
+    return element
 
 # Core game logic functions (no I/O)
 def get_ollama_model():
@@ -481,41 +551,11 @@ def check_math_answer(player_name, selected_index, correct_index, correct_answer
         return (False, 0, f"❌ The correct answer was: {correct_answer}")
 
 # CLI interface functions
-def ask_question_cli(word, correct_def, words, player_name, voice_enabled=False):
+def ask_question_cli(word, correct_def, words, player_name):
     """CLI version of ask_question. Returns points earned."""
-    import speech_recognition as sr
-    
     print(f"\nDefine: {word.upper()}")
-    
-    if voice_enabled:
-        try:
-            print("\n🎤 Press Enter to type your answer, or just start speaking...")
-            input("🎙️ Listening...")
-            r = sr.Recognizer()
-            with sr.Microphone() as mic:
-                audio = r.listen(mic, phrase_time_limit=10)
-            try:
-                player_answer = r.recognize_google(audio).strip()
-            except Exception:
-                print("❌ Could not understand audio.")
-                return 0
-        except AttributeError as e:
-            if "PyAudio" in str(e) or "pyaudio" in str(e).lower():
-                print("⚠️  PyAudio not installed. Voice input unavailable.")
-                print("   Install with: brew install portaudio && pip3 install pyaudio")
-                print("   Falling back to text input...\n")
-                print("\n📝 Type your answer:")
-                player_answer = input("> ").strip()
-            else:
-                raise
-        except Exception as e:
-            print(f"⚠️  Voice input error: {e}")
-            print("   Falling back to text input...\n")
-            print("\n📝 Type your answer:")
-            player_answer = input("> ").strip()
-    else:
-        print("\n📝 Type your answer:")
-        player_answer = input("> ").strip()
+    print("\n📝 Type your answer:")
+    player_answer = input("> ").strip()
     
     is_correct, points, message, show_mc, mc_options, correct_index = check_answer(
         player_name, word, player_answer, correct_def, words
@@ -564,7 +604,7 @@ def launch_bonus_game_cli():
         print("Skipping bonus game.")
         return 0
 
-def game_loop_cli(player_name, words, games_enabled=False, voice_enabled=False):
+def game_loop_cli(player_name, words, games_enabled=False):
     """CLI game loop."""
     scores = load_scores()
     if player_name not in scores:
@@ -572,7 +612,7 @@ def game_loop_cli(player_name, words, games_enabled=False, voice_enabled=False):
     
     while True:
         word_info = get_next_word(player_name, words)
-        points = ask_question_cli(word_info["word"], word_info["definition"], words, player_name, voice_enabled)
+        points = ask_question_cli(word_info["word"], word_info["definition"], words, player_name)
         scores[player_name] += points
         save_scores(scores)
         print(f"Total score: {scores[player_name]}")
@@ -619,10 +659,13 @@ def start_game():
     if game_type == 'words':
         warmup_ollama()
     
+    element_level = get_element_level(current_score)
+    
     return jsonify({
         'status': 'started',
         'score': current_score,
-        'game_type': game_type
+        'game_type': game_type,
+        'level': element_level
     })
 
 @app.route('/api/question', methods=['GET'])
@@ -634,22 +677,28 @@ def get_question():
         return jsonify({'error': 'Player name required'}), 400
     
     if game_type == 'math':
+        current_score = get_player_score(player_name, 'math')
         math_question = get_next_math_question(player_name)
+        element_level = get_element_level(current_score)
         return jsonify({
             'question': math_question['question'],
             'options': math_question['options'],
             'correct_index': math_question['correct_index'],
             'correct_answer': math_question['correct_answer'],
-            'score': get_player_score(player_name, 'math'),
-            'game_type': 'math'
+            'score': current_score,
+            'game_type': 'math',
+            'level': element_level
         })
     else:
+        current_score = get_player_score(player_name, 'words')
         word_info = get_next_word(player_name, words)
+        element_level = get_element_level(current_score)
         return jsonify({
             'word': word_info['word'],
             'definition': word_info['definition'],
-            'score': get_player_score(player_name, 'words'),
-            'game_type': 'words'
+            'score': current_score,
+            'game_type': 'words',
+            'level': element_level
         })
 
 @app.route('/api/answer', methods=['POST'])
@@ -668,11 +717,14 @@ def check_answer_api():
     )
     
     if is_correct:
+        current_score = get_player_score(player_name)
+        element_level = get_element_level(current_score)
         return jsonify({
             'correct': True,
             'points': points,
-            'score': get_player_score(player_name),
-            'message': message
+            'score': current_score,
+            'message': message,
+            'level': element_level
         })
     elif show_mc:
         return jsonify({
@@ -707,11 +759,15 @@ def check_mc_answer_api():
             player_name, selected_index, correct_index, correct_answer
         )
         
+        current_score = get_player_score(player_name, 'math')
+        element_level = get_element_level(current_score)
+        
         return jsonify({
             'correct': is_correct,
             'points': points,
-            'score': get_player_score(player_name, 'math'),
-            'message': message
+            'score': current_score,
+            'message': message,
+            'level': element_level
         })
     else:
         if not all([player_name, selected_index is not None, correct_index is not None, correct_def, word]):
@@ -721,18 +777,21 @@ def check_mc_answer_api():
             player_name, word, selected_index, correct_index, correct_def
         )
         
+        current_score = get_player_score(player_name, 'words')
+        element_level = get_element_level(current_score)
+        
         return jsonify({
             'correct': is_correct,
             'points': points,
-            'score': get_player_score(player_name, 'words'),
-            'message': message
+            'score': current_score,
+            'message': message,
+            'level': element_level
         })
 
 # Main entry point
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--cli', action='store_true', help='Use command-line interface instead of web UI')
-    parser.add_argument('--voice', action='store_true', help='Enable voice input (CLI only)')
     parser.add_argument('--games', action='store_true', help='Enable bonus games at milestone scores')
     parser.add_argument('--port', type=int, default=5000, help='Port for web server (default: 5000)')
     args = parser.parse_args()
@@ -740,9 +799,22 @@ if __name__ == "__main__":
     if args.cli:
         # CLI mode
         player_name = input("Enter your name, explorer: ").strip().lower()
-        game_loop_cli(player_name, words, args.games, args.voice)
+        game_loop_cli(player_name, words, args.games)
     else:
         # Web mode
         print(f"Starting Word Quest Game web server...")
         print(f"Open your browser to: http://localhost:{args.port}")
+        
+        # Get local network IP address for access from other devices
+        try:
+            # Connect to a remote address to determine local IP
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+            s.close()
+            print(f"Access from other devices on the same network: http://{local_ip}:{args.port}")
+        except Exception:
+            # Fallback if we can't determine IP
+            print("(To access from other devices, find this machine's IP address)")
+        
         app.run(debug=False, host='0.0.0.0', port=args.port)

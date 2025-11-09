@@ -21,6 +21,14 @@
             padding: 20px;
         }
         
+        .main-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+            align-items: flex-start;
+        }
+        
         .container {
             background: white;
             border-radius: 20px;
@@ -28,6 +36,141 @@
             max-width: 600px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .element-card-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 350px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+        
+        .element-card {
+            border: 4px solid #000;
+            border-radius: 15px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            position: relative;
+            min-height: 450px;
+        }
+        
+        .element-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .electron-config {
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .atomic-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .element-symbol {
+            font-size: 72px;
+            font-weight: bold;
+            text-align: center;
+            color: #667eea;
+            margin: 30px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .element-name {
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .atomic-mass {
+            font-size: 18px;
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .element-facts {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+        }
+        
+        .element-facts h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .element-facts ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .element-facts li {
+            padding: 8px 0;
+            padding-left: 20px;
+            position: relative;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .element-facts li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .level-progress {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid #ddd;
+        }
+        
+        .progress-bar-container {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 20px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            text-align: center;
+        }
+        
+        @media (max-width: 1000px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .element-card-container {
+                width: 100%;
+                max-width: 600px;
+            }
         }
         
         h1 {
@@ -177,20 +320,43 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎮 Word Quest Game</h1>
-        
-        <div id="name-section" class="name-input">
-            <label for="player-name">Enter your name, explorer:</label>
-            <input type="text" id="player-name" placeholder="Your name" autofocus>
-            <label style="margin-top: 20px; display: block;">Choose game type:</label>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button onclick="startGame('words')" style="flex: 1; background: #667eea;">📚 Words</button>
-                <button onclick="startGame('math')" style="flex: 1; background: #764ba2;">🔢 Math</button>
+    <div class="main-container">
+        <div class="element-card-container hidden" id="element-card-container">
+            <div class="element-card" id="element-card">
+                <div class="element-card-header">
+                    <div class="electron-config" id="electron-config"></div>
+                    <div class="atomic-number" id="atomic-number"></div>
+                </div>
+                <div class="element-symbol" id="element-symbol"></div>
+                <div class="element-name" id="element-name"></div>
+                <div class="atomic-mass" id="atomic-mass"></div>
+                <div class="element-facts">
+                    <h3 id="element-name-facts"></h3>
+                    <ul id="element-facts-list"></ul>
+                </div>
+                <div class="level-progress">
+                    <div class="progress-text" id="progress-text"></div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <div id="game-section" class="hidden">
+        <div class="container">
+            <h1>🎮 Word Quest Game</h1>
+            
+            <div id="name-section" class="name-input">
+                <label for="player-name">Enter your name, explorer:</label>
+                <input type="text" id="player-name" placeholder="Your name" autofocus>
+                <label style="margin-top: 20px; display: block;">Choose game type:</label>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button onclick="startGame('words')" style="flex: 1; background: #667eea;">📚 Words</button>
+                    <button onclick="startGame('math')" style="flex: 1; background: #764ba2;">🔢 Math</button>
+                </div>
+            </div>
+            
+            <div id="game-section" class="hidden">
             <div class="score" id="score">Score: 0</div>
             
             <div class="word-display" id="word-display"></div>
@@ -239,6 +405,7 @@
             .then(data => {
                 document.getElementById('name-section').classList.add('hidden');
                 document.getElementById('game-section').classList.remove('hidden');
+                document.getElementById('element-card-container').classList.remove('hidden');
                 document.getElementById('score').textContent = `Score: ${data.score}`;
                 
                 // Update title based on game type
@@ -246,6 +413,11 @@
                     document.querySelector('h1').textContent = '🔢 Math Quest Game';
                 } else {
                     document.querySelector('h1').textContent = '🎮 Word Quest Game';
+                }
+                
+                // Update element card
+                if (data.level) {
+                    updateElementCard(data.level, data.score);
                 }
                 
                 getQuestion();
@@ -258,6 +430,11 @@
                 .then(data => {
                     if (data.score !== undefined) {
                         document.getElementById('score').textContent = `Score: ${data.score}`;
+                    }
+                    
+                    // Update element card
+                    if (data.level) {
+                        updateElementCard(data.level, data.score);
                     }
                     
                     if (gameType === 'math') {
@@ -329,6 +506,9 @@
                 if (data.correct) {
                     showFeedback(data.message, 'success');
                     document.getElementById('score').textContent = `Score: ${data.score}`;
+                    if (data.level) {
+                        updateElementCard(data.level, data.score);
+                    }
                     setTimeout(getQuestion, 5000);
                 } else if (data.show_mc) {
                     showMultipleChoice(data.options, data.correct_index);
@@ -421,6 +601,9 @@
                 }
                 showFeedback(data.message, data.correct ? 'success' : 'error');
                 document.getElementById('score').textContent = `Score: ${data.score}`;
+                if (data.level) {
+                    updateElementCard(data.level, data.score);
+                }
                 setTimeout(getQuestion, 5000);
             });
         }
@@ -429,6 +612,36 @@
             const feedback = document.getElementById('feedback');
             feedback.textContent = message;
             feedback.className = `feedback ${type}`;
+        }
+        
+        function updateElementCard(level, currentScore) {
+            document.getElementById('electron-config').textContent = level.electron_config;
+            document.getElementById('atomic-number').textContent = level.atomic_number;
+            document.getElementById('element-symbol').textContent = level.symbol;
+            document.getElementById('element-name').textContent = level.name;
+            document.getElementById('atomic-mass').textContent = level.atomic_mass;
+            document.getElementById('element-name-facts').textContent = level.name;
+            
+            const factsList = document.getElementById('element-facts-list');
+            factsList.innerHTML = '';
+            level.facts.forEach(fact => {
+                const li = document.createElement('li');
+                li.textContent = fact;
+                factsList.appendChild(li);
+            });
+            
+            // Update progress bar using actual score
+            const progress = Math.min(level.progress * 100, 100);
+            document.getElementById('progress-bar').style.width = progress + '%';
+            
+            // Update progress text using actual score
+            if (level.next_level_score) {
+                const pointsNeeded = Math.ceil(level.next_level_score - currentScore);
+                document.getElementById('progress-text').textContent = 
+                    `${pointsNeeded} points to next level`;
+            } else {
+                document.getElementById('progress-text').textContent = 'Max level reached!';
+            }
         }
         
         // Enter key support
