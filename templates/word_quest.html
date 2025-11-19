@@ -223,8 +223,8 @@
         }
         
         .cat-image {
-            width: 100px;
-            height: 100px;
+            width: 150px;
+            height: 150px;
             object-fit: cover;
             border-radius: 10px;
             border: 2px solid #ff9800;
@@ -257,7 +257,44 @@
             font-size: 16px;
             text-align: center;
             color: #666;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .cat-stats {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+            padding: 10px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #ffd699;
+        }
+        
+        .cat-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .cat-stat-label {
+            font-size: 11px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .cat-stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ff9800;
+        }
+        
+        .cat-stat-stars {
+            font-size: 14px;
+            color: #ff9800;
         }
         
         .cat-facts {
@@ -289,51 +326,6 @@
             content: "🐾";
             position: absolute;
             left: 0;
-        }
-        
-        .habitat-section {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 2px solid #ddd;
-        }
-        
-        .habitat-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        
-        .habitat-items {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-        
-        .habitat-item {
-            background: #fff;
-            border: 2px solid #ff9800;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .habitat-item-name {
-            font-size: 12px;
-            color: #666;
-        }
-        
-        .next-habitat-item {
-            margin-top: 10px;
-            padding: 10px;
-            background: #fff3cd;
-            border-radius: 8px;
-            font-size: 12px;
-            color: #856404;
         }
         
         @media (max-width: 1350px) {
@@ -570,14 +562,10 @@
                 <div class="cat-images-container hidden" id="cat-images-container"></div>
                 <div class="cat-breed-name" id="cat-breed-name"></div>
                 <div class="cat-info" id="cat-info"></div>
+                <div class="cat-stats" id="cat-stats"></div>
                 <div class="cat-facts">
                     <h3 id="cat-facts-title"></h3>
                     <ul id="cat-facts-list"></ul>
-                </div>
-                <div class="habitat-section">
-                    <div class="habitat-title">🏠 Cat Habitat</div>
-                    <div class="habitat-items" id="habitat-items"></div>
-                    <div class="next-habitat-item hidden" id="next-habitat-item"></div>
                 </div>
                 <div class="level-progress">
                     <div class="progress-text" id="cat-progress-text"></div>
@@ -872,13 +860,13 @@
             document.getElementById('progress-bar').style.width = progress + '%';
             
             // Update progress text using actual score
-            if (level.next_level_score) {
-                const pointsNeeded = Math.ceil(level.next_level_score - currentScore);
-                document.getElementById('progress-text').textContent = 
-                    `${pointsNeeded} points to next level`;
-            } else {
-                document.getElementById('progress-text').textContent = 'Max level reached!';
+            // next_level_score is now absolute
+            const pointsNeeded = Math.ceil(level.next_level_score - currentScore);
+            let progressText = `${pointsNeeded} points to next level`;
+            if (level.cycle && level.cycle > 1) {
+                progressText += ` (Cycle ${level.cycle})`;
             }
+            document.getElementById('progress-text').textContent = progressText;
         }
         
         function updateCatCard(catLevel, currentScore) {
@@ -895,34 +883,77 @@
             // Fetch and display cat images
             fetchCatImages(catLevel.name, catLevel.emoji);
             
-            const factsList = document.getElementById('cat-facts-list');
-            factsList.innerHTML = '';
-            catLevel.facts.forEach(fact => {
-                const li = document.createElement('li');
-                li.textContent = fact;
-                factsList.appendChild(li);
-            });
+            // Update stats section
+            const statsDiv = document.getElementById('cat-stats');
+            statsDiv.innerHTML = '';
             
-            // Update habitat items
-            const habitatItems = document.getElementById('habitat-items');
-            habitatItems.innerHTML = '';
-            if (catLevel.habitat_items && catLevel.habitat_items.length > 0) {
-                catLevel.habitat_items.forEach(item => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'habitat-item';
-                    itemDiv.innerHTML = `<span>${item.emoji}</span><span class="habitat-item-name">${item.name}</span>`;
-                    habitatItems.appendChild(itemDiv);
-                });
+            // Life span
+            if (catLevel.life_span) {
+                const statDiv = document.createElement('div');
+                statDiv.className = 'cat-stat';
+                statDiv.innerHTML = `
+                    <div class="cat-stat-label">Life Span</div>
+                    <div class="cat-stat-value">${catLevel.life_span} years</div>
+                `;
+                statsDiv.appendChild(statDiv);
             }
             
-            // Show next habitat item if available
-            const nextHabitatDiv = document.getElementById('next-habitat-item');
-            if (catLevel.next_habitat_item) {
-                const pointsNeeded = catLevel.next_habitat_score - currentScore;
-                nextHabitatDiv.textContent = `Next: ${catLevel.next_habitat_item.emoji} ${catLevel.next_habitat_item.name} (${pointsNeeded} points)`;
-                nextHabitatDiv.classList.remove('hidden');
-            } else {
-                nextHabitatDiv.classList.add('hidden');
+            // Child friendly (with stars)
+            if (catLevel.child_friendly !== undefined) {
+                const statDiv = document.createElement('div');
+                statDiv.className = 'cat-stat';
+                const stars = '⭐'.repeat(catLevel.child_friendly);
+                statDiv.innerHTML = `
+                    <div class="cat-stat-label">Kid Friendly</div>
+                    <div class="cat-stat-stars">${stars}</div>
+                `;
+                statsDiv.appendChild(statDiv);
+            }
+            
+            // Dog friendly (with stars)
+            if (catLevel.dog_friendly !== undefined) {
+                const statDiv = document.createElement('div');
+                statDiv.className = 'cat-stat';
+                const stars = '🐕'.repeat(catLevel.dog_friendly);
+                statDiv.innerHTML = `
+                    <div class="cat-stat-label">Dog Friendly</div>
+                    <div class="cat-stat-stars">${stars}</div>
+                `;
+                statsDiv.appendChild(statDiv);
+            }
+            
+            // Energy level (with stars)
+            if (catLevel.energy_level !== undefined) {
+                const statDiv = document.createElement('div');
+                statDiv.className = 'cat-stat';
+                const stars = '⚡'.repeat(catLevel.energy_level);
+                statDiv.innerHTML = `
+                    <div class="cat-stat-label">Energy</div>
+                    <div class="cat-stat-stars">${stars}</div>
+                `;
+                statsDiv.appendChild(statDiv);
+            }
+            
+            // Intelligence (with stars)
+            if (catLevel.intelligence !== undefined) {
+                const statDiv = document.createElement('div');
+                statDiv.className = 'cat-stat';
+                const stars = '🧠'.repeat(catLevel.intelligence);
+                statDiv.innerHTML = `
+                    <div class="cat-stat-label">Smart</div>
+                    <div class="cat-stat-stars">${stars}</div>
+                `;
+                statsDiv.appendChild(statDiv);
+            }
+            
+            const factsList = document.getElementById('cat-facts-list');
+            factsList.innerHTML = '';
+            if (catLevel.facts && catLevel.facts.length > 0) {
+                catLevel.facts.forEach(fact => {
+                    const li = document.createElement('li');
+                    li.textContent = fact;
+                    factsList.appendChild(li);
+                });
             }
             
             // Update progress bar
@@ -930,13 +961,13 @@
             document.getElementById('cat-progress-bar').style.width = progress + '%';
             
             // Update progress text
-            if (catLevel.next_level_score) {
-                const pointsNeeded = Math.ceil(catLevel.next_level_score - currentScore);
-                document.getElementById('cat-progress-text').textContent = 
-                    `${pointsNeeded} points to next cat breed`;
-            } else {
-                document.getElementById('cat-progress-text').textContent = 'All cat breeds unlocked!';
+            // next_level_score is now absolute
+            const pointsNeeded = Math.ceil(catLevel.next_level_score - currentScore);
+            let progressText = `${pointsNeeded} points to next cat breed`;
+            if (catLevel.cycle && catLevel.cycle > 1) {
+                progressText += ` (Cycle ${catLevel.cycle})`;
             }
+            document.getElementById('cat-progress-text').textContent = progressText;
         }
         
         function fetchCatImages(breedName, fallbackEmoji) {

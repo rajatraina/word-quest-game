@@ -21,29 +21,35 @@ from pathlib import Path
 from urllib.parse import urlparse
 import hashlib
 
-# Import cat breeds from main.py
-CAT_BREEDS = [
-    {'breed_number': 1, 'name': 'Persian'},
-    {'breed_number': 2, 'name': 'Siamese'},
-    {'breed_number': 3, 'name': 'Maine Coon'},
-    {'breed_number': 4, 'name': 'Bengal'},
-    {'breed_number': 5, 'name': 'Ragdoll'},
-    {'breed_number': 6, 'name': 'British Shorthair'},
-    {'breed_number': 7, 'name': 'Abyssinian'},
-    {'breed_number': 8, 'name': 'Scottish Fold'},
-    {'breed_number': 9, 'name': 'Sphynx'},
-    {'breed_number': 10, 'name': 'Norwegian Forest'},
-    {'breed_number': 11, 'name': 'Russian Blue'},
-    {'breed_number': 12, 'name': 'Turkish Angora'},
-    {'breed_number': 13, 'name': 'Oriental Shorthair'},
-    {'breed_number': 14, 'name': 'American Shorthair'},
-    {'breed_number': 15, 'name': 'Exotic Shorthair'},
-    {'breed_number': 16, 'name': 'Devon Rex'},
-    {'breed_number': 17, 'name': 'Cornish Rex'},
-    {'breed_number': 18, 'name': 'Himalayan'},
-    {'breed_number': 19, 'name': 'Burmese'},
-    {'breed_number': 20, 'name': 'Tonkinese'},
-]
+# Load cat breeds from JSON file (same as main.py)
+def load_cat_breeds():
+    """Load cat breeds from JSON file."""
+    try:
+        with open('cat_breeds_api.json', 'r') as f:
+            breeds = json.load(f)
+            # Ensure breed_number is set correctly
+            for i, breed in enumerate(breeds):
+                breed['breed_number'] = i + 1
+            return breeds
+    except FileNotFoundError:
+        print("Warning: cat_breeds_api.json not found. Run fetch_cat_breeds.py first.")
+        return []
+
+# Load cat breeds from JSON file (same as main.py)
+def load_cat_breeds():
+    """Load cat breeds from JSON file."""
+    try:
+        with open('cat_breeds_api.json', 'r') as f:
+            breeds = json.load(f)
+            # Ensure breed_number is set correctly
+            for i, breed in enumerate(breeds):
+                breed['breed_number'] = i + 1
+            return breeds
+    except FileNotFoundError:
+        print("Warning: cat_breeds_api.json not found. Run fetch_cat_breeds.py first.")
+        return []
+
+CAT_BREEDS = load_cat_breeds()
 
 ASSETS_DIR = Path('assets/cat_images')
 IMAGES_PER_BREED = 5
@@ -164,41 +170,15 @@ def fetch_unsplash_images(breed_name, num_images=5):
     
     return images
 
-def fetch_cat_api_images(breed_name, num_images=5):
+def fetch_cat_api_images(breed_name, num_images=5, api_id=None):
     """Fetch images from The Cat API."""
     images = []
     
-    # Breed ID mapping
-    breed_id_map = {
-        'persian': 'pers',
-        'siamese': 'siam',
-        'maine coon': 'mcoo',
-        'bengal': 'beng',
-        'ragdoll': 'ragd',
-        'british shorthair': 'bsho',
-        'abyssinian': 'abys',
-        'scottish fold': 'sfol',
-        'sphynx': 'sphy',
-        'norwegian forest': 'nfo',
-        'russian blue': 'russ',
-        'turkish angora': 'tang',
-        'oriental shorthair': 'osh',
-        'american shorthair': 'asho',
-        'exotic shorthair': 'esho',
-        'devon rex': 'drex',
-        'cornish rex': 'crex',
-        'himalayan': 'hima',
-        'burmese': 'bure',
-        'tonkinese': 'tonk'
-    }
-    
-    breed_lower = breed_name.lower()
-    breed_id = breed_id_map.get(breed_lower, None)
-    
     try:
-        if breed_id:
+        if api_id:
+            # Use the API ID directly
             url = 'https://api.thecatapi.com/v1/images/search'
-            params = {'limit': num_images, 'breed_ids': breed_id}
+            params = {'limit': num_images, 'breed_ids': api_id}
             response = requests.get(url, params=params, timeout=5)
             if response.status_code == 200:
                 data = response.json()
@@ -206,15 +186,51 @@ def fetch_cat_api_images(breed_name, num_images=5):
                     if 'url' in item:
                         images.append(item['url'])
         else:
-            # Fallback to general cat images
-            url = 'https://api.thecatapi.com/v1/images/search'
-            params = {'limit': num_images}
-            response = requests.get(url, params=params, timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-                for item in data:
-                    if 'url' in item:
-                        images.append(item['url'])
+            # Fallback to breed name search or general cat images
+            breed_id_map = {
+                'persian': 'pers',
+                'siamese': 'siam',
+                'maine coon': 'mcoo',
+                'bengal': 'beng',
+                'ragdoll': 'ragd',
+                'british shorthair': 'bsho',
+                'abyssinian': 'abys',
+                'scottish fold': 'sfol',
+                'sphynx': 'sphy',
+                'norwegian forest cat': 'norw',
+                'russian blue': 'rblu',
+                'turkish angora': 'tang',
+                'oriental': 'orie',
+                'american shorthair': 'asho',
+                'exotic shorthair': 'esho',
+                'devon rex': 'drex',
+                'cornish rex': 'crex',
+                'himalayan': 'hima',
+                'burmese': 'bure',
+                'tonkinese': 'tonk'
+            }
+            breed_lower = breed_name.lower()
+            breed_id = breed_id_map.get(breed_lower, None)
+            
+            if breed_id:
+                url = 'https://api.thecatapi.com/v1/images/search'
+                params = {'limit': num_images, 'breed_ids': breed_id}
+                response = requests.get(url, params=params, timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+                    for item in data:
+                        if 'url' in item:
+                            images.append(item['url'])
+            else:
+                # Fallback to general cat images
+                url = 'https://api.thecatapi.com/v1/images/search'
+                params = {'limit': num_images}
+                response = requests.get(url, params=params, timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+                    for item in data:
+                        if 'url' in item:
+                            images.append(item['url'])
         time.sleep(DOWNLOAD_DELAY)
     except Exception as e:
         print(f"  Error with The Cat API: {e}")
@@ -223,7 +239,7 @@ def fetch_cat_api_images(breed_name, num_images=5):
 
 def download_breed_images(breed):
     """Download images for a specific breed."""
-    breed_name = breed['name']
+    breed_name = breed.get('name', 'Unknown')
     breed_dir = ASSETS_DIR / sanitize_filename(breed_name)
     breed_dir.mkdir(parents=True, exist_ok=True)
     
@@ -253,7 +269,9 @@ def download_breed_images(breed):
     # Try The Cat API (free, no auth)
     if len(all_image_urls) < IMAGES_PER_BREED:
         print("  Trying The Cat API...")
-        urls = fetch_cat_api_images(breed_name, IMAGES_PER_BREED - len(all_image_urls))
+        # Use API ID if available, otherwise use breed name
+        api_id = breed.get('api_id', None)
+        urls = fetch_cat_api_images(breed_name, IMAGES_PER_BREED - len(all_image_urls), api_id)
         all_image_urls.extend(urls)
     
     # Download the images

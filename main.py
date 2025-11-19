@@ -271,49 +271,26 @@ PERIODIC_ELEMENTS = [
 
 POINTS_PER_LEVEL = 10  # Every 10 points unlocks a new element level
 
-# Cat breeds for cat leveling system
-CAT_BREEDS = [
-    {'breed_number': 1, 'name': 'Persian', 'emoji': '🐱', 'origin': 'Iran', 'weight': '7-12 lbs', 
-     'facts': ['long, luxurious fur', 'calm and gentle', 'loves to lounge', 'very quiet meow']},
-    {'breed_number': 2, 'name': 'Siamese', 'emoji': '🐈', 'origin': 'Thailand', 'weight': '8-12 lbs',
-     'facts': ['very vocal and chatty', 'loves attention', 'smart and curious', 'pointed coat pattern']},
-    {'breed_number': 3, 'name': 'Maine Coon', 'emoji': '🐈‍⬛', 'origin': 'USA', 'weight': '10-18 lbs',
-     'facts': ['largest domestic breed', 'gentle giant', 'loves water', 'very friendly']},
-    {'breed_number': 4, 'name': 'Bengal', 'emoji': '🐅', 'origin': 'USA', 'weight': '8-15 lbs',
-     'facts': ['wild-looking spots', 'very active', 'loves to climb', 'water-loving']},
-    {'breed_number': 5, 'name': 'Ragdoll', 'emoji': '😸', 'origin': 'USA', 'weight': '10-20 lbs',
-     'facts': ['goes limp when held', 'blue eyes', 'very docile', 'loves cuddles']},
-    {'breed_number': 6, 'name': 'British Shorthair', 'emoji': '😺', 'origin': 'UK', 'weight': '9-18 lbs',
-     'facts': ['round face and eyes', 'plush coat', 'calm personality', 'independent']},
-    {'breed_number': 7, 'name': 'Abyssinian', 'emoji': '😻', 'origin': 'Ethiopia', 'weight': '6-10 lbs',
-     'facts': ['ticked coat pattern', 'very active', 'loves heights', 'dog-like personality']},
-    {'breed_number': 8, 'name': 'Scottish Fold', 'emoji': '🙀', 'origin': 'Scotland', 'weight': '6-13 lbs',
-     'facts': ['folded ears', 'round face', 'sweet expression', 'gentle and calm']},
-    {'breed_number': 9, 'name': 'Sphynx', 'emoji': '😹', 'origin': 'Canada', 'weight': '6-12 lbs',
-     'facts': ['hairless breed', 'needs warmth', 'very affectionate', 'loves attention']},
-    {'breed_number': 10, 'name': 'Norwegian Forest', 'emoji': '🐾', 'origin': 'Norway', 'weight': '10-18 lbs',
-     'facts': ['thick double coat', 'excellent climber', 'loves cold weather', 'independent']},
-    {'breed_number': 11, 'name': 'Russian Blue', 'emoji': '😼', 'origin': 'Russia', 'weight': '7-12 lbs',
-     'facts': ['silver-blue coat', 'green eyes', 'shy with strangers', 'very loyal']},
-    {'breed_number': 12, 'name': 'Turkish Angora', 'emoji': '😽', 'origin': 'Turkey', 'weight': '5-9 lbs',
-     'facts': ['long silky coat', 'playful and active', 'loves to jump', 'very intelligent']},
-    {'breed_number': 13, 'name': 'Oriental Shorthair', 'emoji': '😾', 'origin': 'Thailand', 'weight': '5-10 lbs',
-     'facts': ['slender body', 'large ears', 'very vocal', 'loves to play']},
-    {'breed_number': 14, 'name': 'American Shorthair', 'emoji': '😿', 'origin': 'USA', 'weight': '8-15 lbs',
-     'facts': ['hardy and healthy', 'good with kids', 'adaptable', 'friendly']},
-    {'breed_number': 15, 'name': 'Exotic Shorthair', 'emoji': '🙀', 'origin': 'USA', 'weight': '7-14 lbs',
-     'facts': ['Persian-like face', 'short plush coat', 'calm and sweet', 'easy-going']},
-    {'breed_number': 16, 'name': 'Devon Rex', 'emoji': '😸', 'origin': 'UK', 'weight': '5-10 lbs',
-     'facts': ['curly soft coat', 'large ears', 'playful and mischievous', 'loves people']},
-    {'breed_number': 17, 'name': 'Cornish Rex', 'emoji': '😻', 'origin': 'UK', 'weight': '6-10 lbs',
-     'facts': ['wavy coat', 'very active', 'loves to jump', 'dog-like behavior']},
-    {'breed_number': 18, 'name': 'Himalayan', 'emoji': '😺', 'origin': 'USA', 'weight': '7-12 lbs',
-     'facts': ['Persian-Siamese mix', 'pointed colors', 'calm and gentle', 'beautiful blue eyes']},
-    {'breed_number': 19, 'name': 'Burmese', 'emoji': '😹', 'origin': 'Myanmar', 'weight': '8-12 lbs',
-     'facts': ['sleek coat', 'very social', 'loves attention', 'people-oriented']},
-    {'breed_number': 20, 'name': 'Tonkinese', 'emoji': '😼', 'origin': 'USA', 'weight': '6-12 lbs',
-     'facts': ['Siamese-Burmese mix', 'aqua eyes', 'very playful', 'loves to talk']},
-]
+# Cat breeds for cat leveling system - loaded from API data
+def load_cat_breeds():
+    """Load cat breeds from JSON file, or use default if file doesn't exist."""
+    try:
+        with open('cat_breeds_api.json', 'r') as f:
+            breeds = json.load(f)
+            # Ensure breed_number is set correctly
+            for i, breed in enumerate(breeds):
+                breed['breed_number'] = i + 1
+            return breeds
+    except FileNotFoundError:
+        # Fallback to default breeds if file doesn't exist
+        return [
+            {'breed_number': 1, 'name': 'Persian', 'emoji': '🐱', 'origin': 'Iran', 'weight': '7-12 lbs', 
+             'facts': ['long, luxurious fur', 'calm and gentle', 'loves to lounge', 'very quiet meow']},
+            {'breed_number': 2, 'name': 'Siamese', 'emoji': '🐈', 'origin': 'Thailand', 'weight': '8-12 lbs',
+             'facts': ['very vocal and chatty', 'loves attention', 'smart and curious', 'pointed coat pattern']},
+        ]
+
+CAT_BREEDS = load_cat_breeds()
 
 # Cat habitat items that unlock as you progress
 CAT_HABITAT_ITEMS = [
@@ -350,32 +327,56 @@ def get_level_types_for_user(player_name):
     return LEVEL_TYPE_CONFIG.get(player_name.lower(), ['chemistry', 'cat'])
 
 def get_element_level(score):
-    """Get the element level based on score. Returns element info dict."""
-    level_index = min(score // POINTS_PER_LEVEL, len(PERIODIC_ELEMENTS) - 1)
+    """Get the element level based on score. Returns element info dict. Wraps around after all elements."""
+    total_elements = len(PERIODIC_ELEMENTS)
+    # Use modulo to wrap around: score 0-9 = element 0, score 10-19 = element 1, ..., score 118-127 = element 0 again
+    level_index = (score // POINTS_PER_LEVEL) % total_elements
     element = PERIODIC_ELEMENTS[level_index].copy()
+    
+    # Calculate which cycle we're in (0 = first time through, 1 = second time, etc.)
+    cycle = (score // POINTS_PER_LEVEL) // total_elements
     element['level'] = level_index + 1
-    element['score_required'] = level_index * POINTS_PER_LEVEL
-    element['next_level_score'] = (level_index + 1) * POINTS_PER_LEVEL if level_index < len(PERIODIC_ELEMENTS) - 1 else None
-    element['progress'] = (score - element['score_required']) / POINTS_PER_LEVEL if element['next_level_score'] else 1.0
+    element['cycle'] = cycle + 1  # Human-readable cycle number (1, 2, 3...)
+    
+    # Score required is the start of the current level within the current cycle
+    score_in_cycle = score % (POINTS_PER_LEVEL * total_elements)
+    score_required_in_cycle = (score_in_cycle // POINTS_PER_LEVEL) * POINTS_PER_LEVEL
+    element['score_required'] = score_required_in_cycle
+    
+    # Next level score (absolute) - calculate absolute score for next level
+    cycle_base_score = cycle * POINTS_PER_LEVEL * total_elements
+    element['next_level_score'] = cycle_base_score + score_required_in_cycle + POINTS_PER_LEVEL
+    
+    # Progress within current level (0.0 to 1.0)
+    progress_in_level = (score_in_cycle % POINTS_PER_LEVEL) / POINTS_PER_LEVEL
+    element['progress'] = progress_in_level
+    
     return element
 
 def get_cat_level(score):
-    """Get the cat level based on score. Returns cat breed info + habitat items dict."""
-    # Get current breed
-    breed_index = min(score // POINTS_PER_LEVEL, len(CAT_BREEDS) - 1)
+    """Get the cat level based on score. Returns cat breed info dict. Wraps around after all breeds."""
+    total_breeds = len(CAT_BREEDS)
+    # Use modulo to wrap around: score 0-9 = breed 0, score 10-19 = breed 1, ..., score 200-209 = breed 0 again
+    breed_index = (score // POINTS_PER_LEVEL) % total_breeds
     breed = CAT_BREEDS[breed_index].copy()
+    
+    # Calculate which cycle we're in (0 = first time through, 1 = second time, etc.)
+    cycle = (score // POINTS_PER_LEVEL) // total_breeds
     breed['level'] = breed_index + 1
-    breed['score_required'] = breed_index * POINTS_PER_LEVEL
-    breed['next_level_score'] = (breed_index + 1) * POINTS_PER_LEVEL if breed_index < len(CAT_BREEDS) - 1 else None
-    breed['progress'] = (score - breed['score_required']) / POINTS_PER_LEVEL if breed['next_level_score'] else 1.0
+    breed['cycle'] = cycle + 1  # Human-readable cycle number (1, 2, 3...)
     
-    # Get unlocked habitat items
-    unlocked_items = [item for item in CAT_HABITAT_ITEMS if score >= item['score_required']]
-    next_item = next((item for item in CAT_HABITAT_ITEMS if score < item['score_required']), None)
+    # Score required is the start of the current level within the current cycle
+    score_in_cycle = score % (POINTS_PER_LEVEL * total_breeds)
+    score_required_in_cycle = (score_in_cycle // POINTS_PER_LEVEL) * POINTS_PER_LEVEL
+    breed['score_required'] = score_required_in_cycle
     
-    breed['habitat_items'] = unlocked_items
-    breed['next_habitat_item'] = next_item
-    breed['next_habitat_score'] = next_item['score_required'] if next_item else None
+    # Next level score (absolute) - calculate absolute score for next level
+    cycle_base_score = cycle * POINTS_PER_LEVEL * total_breeds
+    breed['next_level_score'] = cycle_base_score + score_required_in_cycle + POINTS_PER_LEVEL
+    
+    # Progress within current level (0.0 to 1.0)
+    progress_in_level = (score_in_cycle % POINTS_PER_LEVEL) / POINTS_PER_LEVEL
+    breed['progress'] = progress_in_level
     
     return breed
 
@@ -1148,14 +1149,24 @@ def get_cat_images():
         # Sort by filename to get consistent order
         image_files.sort()
         
+        # Debug logging
+        print(f"DEBUG: Looking for images in {breed_dir}")
+        print(f"DEBUG: Found {len(image_files)} image files")
+        for img_file in image_files:
+            print(f"DEBUG:   - {img_file.name}")
+        
         # Return up to 5 images as URLs
         for img_file in image_files[:5]:
             # Create URL path relative to assets
             img_path = f"cat_images/{breed_dir_name}/{img_file.name}"
             images.append(f"/assets/{img_path}")
+            print(f"DEBUG: Added image URL: /assets/{img_path}")
+    else:
+        print(f"DEBUG: Directory {breed_dir} does not exist")
     
     # If no local images found, return empty list (frontend will show emoji)
     # Note: Run download_cat_images.py script to populate local images
+    print(f"DEBUG: Returning {len(images)} images for {breed_name}")
     return jsonify({'images': images[:5]})  # Return up to 5 images
 
 # Main entry point
