@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script to download cat breed images from various sources.
-This script will download 3-5 images for each cat breed and save them locally.
+This script will download up to 9 images for each cat breed and save them locally.
 
 Usage:
     python3 download_cat_images.py
@@ -35,24 +35,10 @@ def load_cat_breeds():
         print("Warning: cat_breeds_api.json not found. Run fetch_cat_breeds.py first.")
         return []
 
-# Load cat breeds from JSON file (same as main.py)
-def load_cat_breeds():
-    """Load cat breeds from JSON file."""
-    try:
-        with open('cat_breeds_api.json', 'r') as f:
-            breeds = json.load(f)
-            # Ensure breed_number is set correctly
-            for i, breed in enumerate(breeds):
-                breed['breed_number'] = i + 1
-            return breeds
-    except FileNotFoundError:
-        print("Warning: cat_breeds_api.json not found. Run fetch_cat_breeds.py first.")
-        return []
-
 CAT_BREEDS = load_cat_breeds()
 
 ASSETS_DIR = Path('assets/cat_images')
-IMAGES_PER_BREED = 5
+IMAGES_PER_BREED = 9
 DOWNLOAD_DELAY = 1  # Seconds between downloads to be respectful
 
 def sanitize_filename(name):

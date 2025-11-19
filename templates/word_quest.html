@@ -15,7 +15,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
             margin: 0;
         }
         
@@ -23,8 +23,8 @@
             display: flex;
             flex-direction: row;
             flex-wrap: nowrap;
-            gap: 20px;
-            max-width: 1400px;
+            gap: 10px;
+            max-width: 1700px;
             width: 100%;
             align-items: flex-start;
             justify-content: flex-start;
@@ -66,9 +66,9 @@
             background: white;
             border-radius: 20px;
             padding: 30px;
-            width: 350px;
-            max-width: 350px;
-            min-width: 350px;
+            width: 700px;
+            max-width: 700px;
+            min-width: 700px;
             box-sizing: border-box;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             flex-shrink: 0;
@@ -192,19 +192,12 @@
         }
         
         .cat-card {
-            border: 4px solid #ff9800;
+            border: 4px solid #000;
             border-radius: 15px;
             padding: 25px;
-            background: linear-gradient(135deg, #fff5e6 0%, #ffe0b2 100%);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             position: relative;
             min-height: 450px;
-        }
-        
-        .cat-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
         }
         
         .cat-emoji {
@@ -214,20 +207,19 @@
         }
         
         .cat-images-container {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            align-items: center;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
             margin: 20px 0;
-            flex-wrap: wrap;
+            width: 100%;
         }
         
         .cat-image {
-            width: 150px;
-            height: 150px;
+            width: 100%;
+            height: 200px;
             object-fit: cover;
             border-radius: 10px;
-            border: 2px solid #ff9800;
+            border: 2px solid #ddd;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             transition: transform 0.3s ease;
         }
@@ -267,9 +259,9 @@
             flex-wrap: wrap;
             margin: 15px 0;
             padding: 10px;
-            background: #fff;
+            background: #f8f9fa;
             border-radius: 8px;
-            border: 1px solid #ffd699;
+            border: 1px solid #ddd;
         }
         
         .cat-stat {
@@ -289,12 +281,7 @@
         .cat-stat-value {
             font-size: 16px;
             font-weight: 600;
-            color: #ff9800;
-        }
-        
-        .cat-stat-stars {
-            font-size: 14px;
-            color: #ff9800;
+            color: #667eea;
         }
         
         .cat-facts {
@@ -340,9 +327,15 @@
                 min-width: unset;
             }
             
-            .element-card-container, .cat-card-container {
+            .element-card-container {
                 width: 100%;
                 max-width: 600px;
+                min-width: unset;
+            }
+            
+            .cat-card-container {
+                width: 100%;
+                max-width: 700px;
                 min-width: unset;
             }
         }
@@ -555,9 +548,6 @@
         
         <div class="cat-card-container hidden" id="cat-card-container">
             <div class="cat-card" id="cat-card">
-                <div class="cat-card-header">
-                    <div class="cat-breed-number" id="cat-breed-number"></div>
-                </div>
                 <div class="cat-emoji hidden" id="cat-emoji"></div>
                 <div class="cat-images-container hidden" id="cat-images-container"></div>
                 <div class="cat-breed-name" id="cat-breed-name"></div>
@@ -870,7 +860,6 @@
         }
         
         function updateCatCard(catLevel, currentScore) {
-            document.getElementById('cat-breed-number').textContent = `Cat #${catLevel.breed_number}`;
             document.getElementById('cat-breed-name').textContent = catLevel.name;
             document.getElementById('cat-info').textContent = `${catLevel.origin} • ${catLevel.weight}`;
             document.getElementById('cat-facts-title').textContent = `About ${catLevel.name}`;
@@ -898,50 +887,46 @@
                 statsDiv.appendChild(statDiv);
             }
             
-            // Child friendly (with stars)
+            // Child friendly (with number)
             if (catLevel.child_friendly !== undefined) {
                 const statDiv = document.createElement('div');
                 statDiv.className = 'cat-stat';
-                const stars = '⭐'.repeat(catLevel.child_friendly);
                 statDiv.innerHTML = `
                     <div class="cat-stat-label">Kid Friendly</div>
-                    <div class="cat-stat-stars">${stars}</div>
+                    <div class="cat-stat-value">${catLevel.child_friendly}</div>
                 `;
                 statsDiv.appendChild(statDiv);
             }
             
-            // Dog friendly (with stars)
+            // Dog friendly (with number)
             if (catLevel.dog_friendly !== undefined) {
                 const statDiv = document.createElement('div');
                 statDiv.className = 'cat-stat';
-                const stars = '🐕'.repeat(catLevel.dog_friendly);
                 statDiv.innerHTML = `
                     <div class="cat-stat-label">Dog Friendly</div>
-                    <div class="cat-stat-stars">${stars}</div>
+                    <div class="cat-stat-value">${catLevel.dog_friendly}</div>
                 `;
                 statsDiv.appendChild(statDiv);
             }
             
-            // Energy level (with stars)
+            // Energy level (with number)
             if (catLevel.energy_level !== undefined) {
                 const statDiv = document.createElement('div');
                 statDiv.className = 'cat-stat';
-                const stars = '⚡'.repeat(catLevel.energy_level);
                 statDiv.innerHTML = `
                     <div class="cat-stat-label">Energy</div>
-                    <div class="cat-stat-stars">${stars}</div>
+                    <div class="cat-stat-value">${catLevel.energy_level}</div>
                 `;
                 statsDiv.appendChild(statDiv);
             }
             
-            // Intelligence (with stars)
+            // Intelligence (with number)
             if (catLevel.intelligence !== undefined) {
                 const statDiv = document.createElement('div');
                 statDiv.className = 'cat-stat';
-                const stars = '🧠'.repeat(catLevel.intelligence);
                 statDiv.innerHTML = `
                     <div class="cat-stat-label">Smart</div>
-                    <div class="cat-stat-stars">${stars}</div>
+                    <div class="cat-stat-value">${catLevel.intelligence}</div>
                 `;
                 statsDiv.appendChild(statDiv);
             }

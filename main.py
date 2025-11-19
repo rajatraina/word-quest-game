@@ -1155,8 +1155,8 @@ def get_cat_images():
         for img_file in image_files:
             print(f"DEBUG:   - {img_file.name}")
         
-        # Return up to 5 images as URLs
-        for img_file in image_files[:5]:
+        # Return up to 6 images as URLs
+        for img_file in image_files[:6]:
             # Create URL path relative to assets
             img_path = f"cat_images/{breed_dir_name}/{img_file.name}"
             images.append(f"/assets/{img_path}")
@@ -1167,7 +1167,7 @@ def get_cat_images():
     # If no local images found, return empty list (frontend will show emoji)
     # Note: Run download_cat_images.py script to populate local images
     print(f"DEBUG: Returning {len(images)} images for {breed_name}")
-    return jsonify({'images': images[:5]})  # Return up to 5 images
+    return jsonify({'images': images[:6]})  # Return up to 6 images
 
 # Main entry point
 if __name__ == "__main__":
