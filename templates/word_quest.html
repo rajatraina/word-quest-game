@@ -15,27 +15,36 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
+            margin: 0;
         }
         
         .main-container {
             display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
             gap: 20px;
-            max-width: 1200px;
+            max-width: 1400px;
             width: 100%;
             align-items: flex-start;
+            justify-content: flex-start;
+            margin: 0 auto;
+            position: relative;
         }
         
         .container {
             background: white;
             border-radius: 20px;
             padding: 40px;
+            width: 600px;
             max-width: 600px;
-            width: 100%;
+            min-width: 600px;
+            flex-shrink: 0;
+            flex-grow: 0;
+            box-sizing: border-box;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            order: 2;
         }
         
         .element-card-container {
@@ -43,8 +52,29 @@
             border-radius: 20px;
             padding: 30px;
             width: 350px;
+            max-width: 350px;
+            min-width: 350px;
+            box-sizing: border-box;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             flex-shrink: 0;
+            flex-grow: 0;
+            position: relative;
+            order: 1;
+        }
+        
+        .cat-card-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 350px;
+            max-width: 350px;
+            min-width: 350px;
+            box-sizing: border-box;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+            flex-grow: 0;
+            position: relative;
+            order: 3;
         }
         
         .element-card {
@@ -161,15 +191,167 @@
             text-align: center;
         }
         
-        @media (max-width: 1000px) {
+        .cat-card {
+            border: 4px solid #ff9800;
+            border-radius: 15px;
+            padding: 25px;
+            background: linear-gradient(135deg, #fff5e6 0%, #ffe0b2 100%);
+            position: relative;
+            min-height: 450px;
+        }
+        
+        .cat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .cat-emoji {
+            font-size: 80px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .cat-images-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .cat-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #ff9800;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .cat-image:hover {
+            transform: scale(1.1);
+        }
+        
+        .cat-image-loading {
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .cat-breed-name {
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .cat-info {
+            font-size: 16px;
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .cat-facts {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+        }
+        
+        .cat-facts h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .cat-facts ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .cat-facts li {
+            padding: 8px 0;
+            padding-left: 20px;
+            position: relative;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .cat-facts li:before {
+            content: "🐾";
+            position: absolute;
+            left: 0;
+        }
+        
+        .habitat-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid #ddd;
+        }
+        
+        .habitat-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .habitat-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .habitat-item {
+            background: #fff;
+            border: 2px solid #ff9800;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .habitat-item-name {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .next-habitat-item {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #856404;
+        }
+        
+        @media (max-width: 1350px) {
             .main-container {
                 flex-direction: column;
                 align-items: center;
             }
             
-            .element-card-container {
+            .container {
                 width: 100%;
                 max-width: 600px;
+                min-width: unset;
+            }
+            
+            .element-card-container, .cat-card-container {
+                width: 100%;
+                max-width: 600px;
+                min-width: unset;
             }
         }
         
@@ -376,6 +558,34 @@
             </div>
             
             <div class="feedback" id="feedback"></div>
+            </div>
+        </div>
+        
+        <div class="cat-card-container hidden" id="cat-card-container">
+            <div class="cat-card" id="cat-card">
+                <div class="cat-card-header">
+                    <div class="cat-breed-number" id="cat-breed-number"></div>
+                </div>
+                <div class="cat-emoji hidden" id="cat-emoji"></div>
+                <div class="cat-images-container hidden" id="cat-images-container"></div>
+                <div class="cat-breed-name" id="cat-breed-name"></div>
+                <div class="cat-info" id="cat-info"></div>
+                <div class="cat-facts">
+                    <h3 id="cat-facts-title"></h3>
+                    <ul id="cat-facts-list"></ul>
+                </div>
+                <div class="habitat-section">
+                    <div class="habitat-title">🏠 Cat Habitat</div>
+                    <div class="habitat-items" id="habitat-items"></div>
+                    <div class="next-habitat-item hidden" id="next-habitat-item"></div>
+                </div>
+                <div class="level-progress">
+                    <div class="progress-text" id="cat-progress-text"></div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="cat-progress-bar" style="background: linear-gradient(90deg, #ff9800 0%, #ff6f00 100%);"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -405,7 +615,6 @@
             .then(data => {
                 document.getElementById('name-section').classList.add('hidden');
                 document.getElementById('game-section').classList.remove('hidden');
-                document.getElementById('element-card-container').classList.remove('hidden');
                 document.getElementById('score').textContent = `Score: ${data.score}`;
                 
                 // Update title based on game type
@@ -415,9 +624,22 @@
                     document.querySelector('h1').textContent = '🎮 Word Quest Game';
                 }
                 
-                // Update element card
-                if (data.level) {
-                    updateElementCard(data.level, data.score);
+                // Show/hide level cards based on level types
+                if (data.level_types && data.level_types.includes('chemistry')) {
+                    document.getElementById('element-card-container').classList.remove('hidden');
+                }
+                if (data.level_types && data.level_types.includes('cat')) {
+                    document.getElementById('cat-card-container').classList.remove('hidden');
+                }
+                
+                // Update level cards
+                if (data.levels) {
+                    if (data.levels.chemistry) {
+                        updateElementCard(data.levels.chemistry, data.score);
+                    }
+                    if (data.levels.cat) {
+                        updateCatCard(data.levels.cat, data.score);
+                    }
                 }
                 
                 getQuestion();
@@ -432,9 +654,14 @@
                         document.getElementById('score').textContent = `Score: ${data.score}`;
                     }
                     
-                    // Update element card
-                    if (data.level) {
-                        updateElementCard(data.level, data.score);
+                    // Update level cards
+                    if (data.levels) {
+                        if (data.levels.chemistry) {
+                            updateElementCard(data.levels.chemistry, data.score);
+                        }
+                        if (data.levels.cat) {
+                            updateCatCard(data.levels.cat, data.score);
+                        }
                     }
                     
                     if (gameType === 'math') {
@@ -506,8 +733,13 @@
                 if (data.correct) {
                     showFeedback(data.message, 'success');
                     document.getElementById('score').textContent = `Score: ${data.score}`;
-                    if (data.level) {
-                        updateElementCard(data.level, data.score);
+                    if (data.levels) {
+                        if (data.levels.chemistry) {
+                            updateElementCard(data.levels.chemistry, data.score);
+                        }
+                        if (data.levels.cat) {
+                            updateCatCard(data.levels.cat, data.score);
+                        }
                     }
                     setTimeout(getQuestion, 5000);
                 } else if (data.show_mc) {
@@ -601,8 +833,13 @@
                 }
                 showFeedback(data.message, data.correct ? 'success' : 'error');
                 document.getElementById('score').textContent = `Score: ${data.score}`;
-                if (data.level) {
-                    updateElementCard(data.level, data.score);
+                if (data.levels) {
+                    if (data.levels.chemistry) {
+                        updateElementCard(data.levels.chemistry, data.score);
+                    }
+                    if (data.levels.cat) {
+                        updateCatCard(data.levels.cat, data.score);
+                    }
                 }
                 setTimeout(getQuestion, 5000);
             });
@@ -642,6 +879,135 @@
             } else {
                 document.getElementById('progress-text').textContent = 'Max level reached!';
             }
+        }
+        
+        function updateCatCard(catLevel, currentScore) {
+            document.getElementById('cat-breed-number').textContent = `Cat #${catLevel.breed_number}`;
+            document.getElementById('cat-breed-name').textContent = catLevel.name;
+            document.getElementById('cat-info').textContent = `${catLevel.origin} • ${catLevel.weight}`;
+            document.getElementById('cat-facts-title').textContent = `About ${catLevel.name}`;
+            
+            // Show emoji initially while loading images
+            const emojiDiv = document.getElementById('cat-emoji');
+            emojiDiv.textContent = catLevel.emoji;
+            emojiDiv.classList.remove('hidden');
+            
+            // Fetch and display cat images
+            fetchCatImages(catLevel.name, catLevel.emoji);
+            
+            const factsList = document.getElementById('cat-facts-list');
+            factsList.innerHTML = '';
+            catLevel.facts.forEach(fact => {
+                const li = document.createElement('li');
+                li.textContent = fact;
+                factsList.appendChild(li);
+            });
+            
+            // Update habitat items
+            const habitatItems = document.getElementById('habitat-items');
+            habitatItems.innerHTML = '';
+            if (catLevel.habitat_items && catLevel.habitat_items.length > 0) {
+                catLevel.habitat_items.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'habitat-item';
+                    itemDiv.innerHTML = `<span>${item.emoji}</span><span class="habitat-item-name">${item.name}</span>`;
+                    habitatItems.appendChild(itemDiv);
+                });
+            }
+            
+            // Show next habitat item if available
+            const nextHabitatDiv = document.getElementById('next-habitat-item');
+            if (catLevel.next_habitat_item) {
+                const pointsNeeded = catLevel.next_habitat_score - currentScore;
+                nextHabitatDiv.textContent = `Next: ${catLevel.next_habitat_item.emoji} ${catLevel.next_habitat_item.name} (${pointsNeeded} points)`;
+                nextHabitatDiv.classList.remove('hidden');
+            } else {
+                nextHabitatDiv.classList.add('hidden');
+            }
+            
+            // Update progress bar
+            const progress = Math.min(catLevel.progress * 100, 100);
+            document.getElementById('cat-progress-bar').style.width = progress + '%';
+            
+            // Update progress text
+            if (catLevel.next_level_score) {
+                const pointsNeeded = Math.ceil(catLevel.next_level_score - currentScore);
+                document.getElementById('cat-progress-text').textContent = 
+                    `${pointsNeeded} points to next cat breed`;
+            } else {
+                document.getElementById('cat-progress-text').textContent = 'All cat breeds unlocked!';
+            }
+        }
+        
+        function fetchCatImages(breedName, fallbackEmoji) {
+            const imagesContainer = document.getElementById('cat-images-container');
+            const emojiDiv = document.getElementById('cat-emoji');
+            
+            // Fetch images from backend
+            fetch(`/api/cat_images?breed=${encodeURIComponent(breedName)}`)
+                .then(r => {
+                    if (!r.ok) {
+                        throw new Error(`HTTP error! status: ${r.status}`);
+                    }
+                    return r.json();
+                })
+                .then(data => {
+                    console.log('Cat images response:', data);
+                    imagesContainer.innerHTML = '';
+                    
+                    if (data.images && data.images.length > 0) {
+                        console.log(`Found ${data.images.length} images for ${breedName}`);
+                        let loadedCount = 0;
+                        let errorCount = 0;
+                        const totalImages = data.images.length;
+                        
+                        // Display fetched images
+                        data.images.forEach((imageUrl, index) => {
+                            const img = document.createElement('img');
+                            img.className = 'cat-image';
+                            img.src = imageUrl;
+                            img.alt = `${breedName} cat`;
+                            img.onload = function() {
+                                loadedCount++;
+                                console.log(`Image ${index + 1} loaded successfully`);
+                                // Once at least one image loads, hide emoji and show container
+                                if (loadedCount === 1) {
+                                    emojiDiv.classList.add('hidden');
+                                    imagesContainer.classList.remove('hidden');
+                                }
+                            };
+                            img.onerror = function() {
+                                errorCount++;
+                                console.error(`Image ${index + 1} failed to load:`, imageUrl);
+                                // If image fails to load, hide it
+                                this.style.display = 'none';
+                                loadedCount++;
+                                // If all images fail, show emoji
+                                if (loadedCount === totalImages && errorCount === totalImages) {
+                                    console.log('All images failed to load, showing emoji');
+                                    emojiDiv.textContent = fallbackEmoji || '🐱';
+                                    emojiDiv.classList.remove('hidden');
+                                    imagesContainer.classList.add('hidden');
+                                }
+                            };
+                            imagesContainer.appendChild(img);
+                        });
+                    } else {
+                        console.log(`No images returned for ${breedName}, showing emoji`);
+                        // Fallback to emoji if no images returned
+                        emojiDiv.textContent = fallbackEmoji || '🐱';
+                        emojiDiv.classList.remove('hidden');
+                        imagesContainer.classList.add('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching cat images:', error);
+                    // Fallback to emoji on error
+                    imagesContainer.innerHTML = '';
+                    emojiDiv.textContent = fallbackEmoji || '🐱';
+                    emojiDiv.classList.remove('hidden');
+                    imagesContainer.classList.add('hidden');
+                });
         }
         
         // Enter key support

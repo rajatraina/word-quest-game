@@ -27,6 +27,54 @@ This interactive learning game combines vocabulary practice with gamification. T
    - Ensure the Ollama server is running before starting the game
 3. **Pygame** - Required for the bonus games (installed via requirements.txt)
 
+### Cat Breed Images
+
+The game displays real cat breed images in the cat cards. Images are stored locally in the `assets/cat_images/` directory.
+
+#### Downloading Cat Images
+
+To download images for all cat breeds, run the download script:
+
+```bash
+python3 download_cat_images.py
+```
+
+This script will:
+- Download 3-5 images for each cat breed
+- Save them in `assets/cat_images/[breed_name]/`
+- Use available APIs in order of preference
+
+#### API Setup (Optional, for better image quality)
+
+The download script can use the following APIs (optional, but recommended for better results):
+
+**Google Custom Search API (Best Results):**
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Enable "Custom Search API" and create an API Key
+3. Create a Programmable Search Engine at [programmablesearchengine.google.com](https://programmablesearchengine.google.com/)
+   - Enter `*.google.com` to search the entire web
+4. Set environment variables:
+   ```bash
+   export GOOGLE_API_KEY="your-api-key-here"
+   export GOOGLE_CX="your-search-engine-id-here"
+   ```
+
+**Unsplash API:**
+```bash
+export UNSPLASH_ACCESS_KEY="your-unsplash-key-here"
+```
+
+**Note:** If no API keys are set, the script will use The Cat API (free, no auth required) as a fallback.
+
+#### Refreshing Images
+
+To refresh/update images for all breeds, simply run the download script again:
+```bash
+python3 download_cat_images.py
+```
+
+The script will skip breeds that already have enough images, or you can delete specific breed directories to force re-download.
+
 ## Installation
 
 1. Install Python dependencies:

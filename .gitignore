@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 scores.json
 
+# Cat breed images (downloaded assets)
+assets/cat_images/

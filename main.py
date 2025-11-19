@@ -10,6 +10,7 @@ import threading
 import socket
 from math import gcd
 from flask import Flask, render_template, jsonify, request
+import requests
 
 # Game configuration
 WORDS_FILE = "words.json"
@@ -17,7 +18,10 @@ SCORES_FILE = "scores.json"
 
 # Name to grade mapping for math questions
 NAME_TO_GRADE = {
-    'mira': 3,
+    'mira': 4,
+    'mira5': 5,
+    'mira3': 3,
+    'mira6': 6,
     'raya': 6,
     'vik': 6,
     'rajat': 12,
@@ -67,21 +71,283 @@ PERIODIC_ELEMENTS = [
      'electron_config': '[Ar]4s¹', 'facts': ['found in bananas', 'used in fertilizers', 'explodes in water', 'keeps heart healthy']},
     {'symbol': 'Ca', 'name': 'Calcium', 'atomic_number': 20, 'atomic_mass': 40.08, 
      'electron_config': '[Ar]4s²', 'facts': ['makes bones strong', 'found in milk', 'used in chalk', 'important for teeth']},
+    {'symbol': 'Sc', 'name': 'Scandium', 'atomic_number': 21, 'atomic_mass': 44.96, 
+     'electron_config': '[Ar]3d¹4s²', 'facts': ['rare earth metal', 'used in sports equipment', 'found in meteors', 'makes things lighter']},
+    {'symbol': 'Ti', 'name': 'Titanium', 'atomic_number': 22, 'atomic_mass': 47.87, 
+     'electron_config': '[Ar]3d²4s²', 'facts': ['very strong metal', 'used in airplanes', 'found in paint', 'lightweight and strong']},
+    {'symbol': 'V', 'name': 'Vanadium', 'atomic_number': 23, 'atomic_mass': 50.94, 
+     'electron_config': '[Ar]3d³4s²', 'facts': ['makes steel stronger', 'found in tools', 'used in batteries', 'colorful compounds']},
+    {'symbol': 'Cr', 'name': 'Chromium', 'atomic_number': 24, 'atomic_mass': 52.00, 
+     'electron_config': '[Ar]3d⁵4s¹', 'facts': ['makes things shiny', 'used in chrome', 'found in stainless steel', 'colorful compounds']},
+    {'symbol': 'Mn', 'name': 'Manganese', 'atomic_number': 25, 'atomic_mass': 54.94, 
+     'electron_config': '[Ar]3d⁵4s²', 'facts': ['used in batteries', 'found in nuts', 'makes steel strong', 'important for health']},
     {'symbol': 'Fe', 'name': 'Iron', 'atomic_number': 26, 'atomic_mass': 55.85, 
      'electron_config': '[Ar]3d⁶4s²', 'facts': ['used in steel', 'found in blood', 'makes things strong', 'most common metal']},
+    {'symbol': 'Co', 'name': 'Cobalt', 'atomic_number': 27, 'atomic_mass': 58.93, 
+     'electron_config': '[Ar]3d⁷4s²', 'facts': ['used in magnets', 'found in batteries', 'makes things blue', 'important for health']},
+    {'symbol': 'Ni', 'name': 'Nickel', 'atomic_number': 28, 'atomic_mass': 58.69, 
+     'electron_config': '[Ar]3d⁸4s²', 'facts': ['used in coins', 'found in batteries', 'makes things shiny', 'resists rust']},
     {'symbol': 'Cu', 'name': 'Copper', 'atomic_number': 29, 'atomic_mass': 63.55, 
      'electron_config': '[Ar]3d¹⁰4s¹', 'facts': ['used in wires', 'found in pennies', 'conducts electricity', 'turns green when old']},
     {'symbol': 'Zn', 'name': 'Zinc', 'atomic_number': 30, 'atomic_mass': 65.38, 
      'electron_config': '[Ar]3d¹⁰4s²', 'facts': ['used in batteries', 'prevents rust', 'found in sunscreen', 'important for health']},
+    {'symbol': 'Ga', 'name': 'Gallium', 'atomic_number': 31, 'atomic_mass': 69.72, 
+     'electron_config': '[Ar]3d¹⁰4s²4p¹', 'facts': ['melts in your hand', 'used in LEDs', 'found in phones', 'shiny metal']},
+    {'symbol': 'Ge', 'name': 'Germanium', 'atomic_number': 32, 'atomic_mass': 72.63, 
+     'electron_config': '[Ar]3d¹⁰4s²4p²', 'facts': ['used in computers', 'found in fiber optics', 'semiconductor', 'makes things faster']},
+    {'symbol': 'As', 'name': 'Arsenic', 'atomic_number': 33, 'atomic_mass': 74.92, 
+     'electron_config': '[Ar]3d¹⁰4s²4p³', 'facts': ['very poisonous', 'found in nature', 'used in old paint', 'dangerous element']},
+    {'symbol': 'Se', 'name': 'Selenium', 'atomic_number': 34, 'atomic_mass': 78.97, 
+     'electron_config': '[Ar]3d¹⁰4s²4p⁴', 'facts': ['used in photocopiers', 'found in nuts', 'important for health', 'makes things work']},
+    {'symbol': 'Br', 'name': 'Bromine', 'atomic_number': 35, 'atomic_mass': 79.90, 
+     'electron_config': '[Ar]3d¹⁰4s²4p⁵', 'facts': ['red-brown liquid', 'used in fire retardants', 'smells bad', 'found in pools']},
+    {'symbol': 'Kr', 'name': 'Krypton', 'atomic_number': 36, 'atomic_mass': 83.80, 
+     'electron_config': '[Ar]3d¹⁰4s²4p⁶', 'facts': ['noble gas', 'used in lights', 'found in air', 'glows when electrified']},
+    {'symbol': 'Rb', 'name': 'Rubidium', 'atomic_number': 37, 'atomic_mass': 85.47, 
+     'electron_config': '[Kr]5s¹', 'facts': ['very reactive', 'used in research', 'found in space', 'explodes in water']},
+    {'symbol': 'Sr', 'name': 'Strontium', 'atomic_number': 38, 'atomic_mass': 87.62, 
+     'electron_config': '[Kr]5s²', 'facts': ['used in fireworks', 'found in bones', 'makes red flames', 'found in nature']},
+    {'symbol': 'Y', 'name': 'Yttrium', 'atomic_number': 39, 'atomic_mass': 88.91, 
+     'electron_config': '[Kr]4d¹5s²', 'facts': ['rare earth metal', 'used in LEDs', 'found in TVs', 'makes things glow']},
+    {'symbol': 'Zr', 'name': 'Zirconium', 'atomic_number': 40, 'atomic_mass': 91.22, 
+     'electron_config': '[Kr]4d²5s²', 'facts': ['used in nuclear reactors', 'found in jewelry', 'resists heat', 'very strong']},
+    {'symbol': 'Nb', 'name': 'Niobium', 'atomic_number': 41, 'atomic_mass': 92.91, 
+     'electron_config': '[Kr]4d⁴5s¹', 'facts': ['used in superconductor magnets', 'found in alloys', 'very rare', 'makes things strong']},
+    {'symbol': 'Mo', 'name': 'Molybdenum', 'atomic_number': 42, 'atomic_mass': 95.95, 
+     'electron_config': '[Kr]4d⁵5s¹', 'facts': ['used in steel', 'found in enzymes', 'makes things hard', 'important for life']},
+    {'symbol': 'Tc', 'name': 'Technetium', 'atomic_number': 43, 'atomic_mass': 98.00, 
+     'electron_config': '[Kr]4d⁵5s²', 'facts': ['first artificial element', 'radioactive', 'used in medicine', 'very rare']},
+    {'symbol': 'Ru', 'name': 'Ruthenium', 'atomic_number': 44, 'atomic_mass': 101.07, 
+     'electron_config': '[Kr]4d⁷5s¹', 'facts': ['precious metal', 'used in electronics', 'very hard', 'resists corrosion']},
+    {'symbol': 'Rh', 'name': 'Rhodium', 'atomic_number': 45, 'atomic_mass': 102.91, 
+     'electron_config': '[Kr]4d⁸5s¹', 'facts': ['precious metal', 'used in jewelry', 'very expensive', 'shiny and rare']},
+    {'symbol': 'Pd', 'name': 'Palladium', 'atomic_number': 46, 'atomic_mass': 106.42, 
+     'electron_config': '[Kr]4d¹⁰', 'facts': ['precious metal', 'used in cars', 'catalyzes reactions', 'found in jewelry']},
     {'symbol': 'Ag', 'name': 'Silver', 'atomic_number': 47, 'atomic_mass': 107.87, 
      'electron_config': '[Kr]4d¹⁰5s¹', 'facts': ['shiny metal', 'used in jewelry', 'conducts electricity best', 'used in photography']},
+    {'symbol': 'Cd', 'name': 'Cadmium', 'atomic_number': 48, 'atomic_mass': 112.41, 
+     'electron_config': '[Kr]4d¹⁰5s²', 'facts': ['used in batteries', 'toxic metal', 'found in paint', 'yellow color']},
+    {'symbol': 'In', 'name': 'Indium', 'atomic_number': 49, 'atomic_mass': 114.82, 
+     'electron_config': '[Kr]4d¹⁰5s²5p¹', 'facts': ['used in touchscreens', 'very soft', 'found in phones', 'makes things work']},
+    {'symbol': 'Sn', 'name': 'Tin', 'atomic_number': 50, 'atomic_mass': 118.71, 
+     'electron_config': '[Kr]4d¹⁰5s²5p²', 'facts': ['used in cans', 'found in bronze', 'makes things shiny', 'resists rust']},
+    {'symbol': 'Sb', 'name': 'Antimony', 'atomic_number': 51, 'atomic_mass': 121.76, 
+     'electron_config': '[Kr]4d¹⁰5s²5p³', 'facts': ['used in batteries', 'found in matches', 'makes things hard', 'toxic element']},
+    {'symbol': 'Te', 'name': 'Tellurium', 'atomic_number': 52, 'atomic_mass': 127.60, 
+     'electron_config': '[Kr]4d¹⁰5s²5p⁴', 'facts': ['used in solar cells', 'found in nature', 'makes things work', 'rare element']},
+    {'symbol': 'I', 'name': 'Iodine', 'atomic_number': 53, 'atomic_mass': 126.90, 
+     'electron_config': '[Kr]4d¹⁰5s²5p⁵', 'facts': ['used in medicine', 'found in salt', 'purple vapor', 'important for health']},
+    {'symbol': 'Xe', 'name': 'Xenon', 'atomic_number': 54, 'atomic_mass': 131.29, 
+     'electron_config': '[Kr]4d¹⁰5s²5p⁶', 'facts': ['noble gas', 'used in lights', 'found in air', 'glows blue']},
+    {'symbol': 'Cs', 'name': 'Cesium', 'atomic_number': 55, 'atomic_mass': 132.91, 
+     'electron_config': '[Xe]6s¹', 'facts': ['most reactive metal', 'used in atomic clocks', 'explodes in water', 'very soft']},
+    {'symbol': 'Ba', 'name': 'Barium', 'atomic_number': 56, 'atomic_mass': 137.33, 
+     'electron_config': '[Xe]6s²', 'facts': ['used in X-rays', 'found in nature', 'makes green flames', 'heavy metal']},
+    {'symbol': 'La', 'name': 'Lanthanum', 'atomic_number': 57, 'atomic_mass': 138.91, 
+     'electron_config': '[Xe]5d¹6s²', 'facts': ['rare earth metal', 'used in cameras', 'found in nature', 'makes things work']},
+    {'symbol': 'Ce', 'name': 'Cerium', 'atomic_number': 58, 'atomic_mass': 140.12, 
+     'electron_config': '[Xe]4f¹5d¹6s²', 'facts': ['rare earth metal', 'used in lighters', 'found in nature', 'most common rare earth']},
+    {'symbol': 'Pr', 'name': 'Praseodymium', 'atomic_number': 59, 'atomic_mass': 140.91, 
+     'electron_config': '[Xe]4f³6s²', 'facts': ['rare earth metal', 'used in magnets', 'found in nature', 'green color']},
+    {'symbol': 'Nd', 'name': 'Neodymium', 'atomic_number': 60, 'atomic_mass': 144.24, 
+     'electron_config': '[Xe]4f⁴6s²', 'facts': ['rare earth metal', 'used in strong magnets', 'found in headphones', 'purple color']},
+    {'symbol': 'Pm', 'name': 'Promethium', 'atomic_number': 61, 'atomic_mass': 145.00, 
+     'electron_config': '[Xe]4f⁵6s²', 'facts': ['radioactive element', 'used in batteries', 'very rare', 'glows in dark']},
+    {'symbol': 'Sm', 'name': 'Samarium', 'atomic_number': 62, 'atomic_mass': 150.36, 
+     'electron_config': '[Xe]4f⁶6s²', 'facts': ['rare earth metal', 'used in magnets', 'found in nature', 'yellow color']},
+    {'symbol': 'Eu', 'name': 'Europium', 'atomic_number': 63, 'atomic_mass': 151.96, 
+     'electron_config': '[Xe]4f⁷6s²', 'facts': ['rare earth metal', 'used in TVs', 'makes red color', 'very reactive']},
+    {'symbol': 'Gd', 'name': 'Gadolinium', 'atomic_number': 64, 'atomic_mass': 157.25, 
+     'electron_config': '[Xe]4f⁷5d¹6s²', 'facts': ['rare earth metal', 'used in MRI machines', 'magnetic', 'found in nature']},
+    {'symbol': 'Tb', 'name': 'Terbium', 'atomic_number': 65, 'atomic_mass': 158.93, 
+     'electron_config': '[Xe]4f⁹6s²', 'facts': ['rare earth metal', 'used in green phosphors', 'found in nature', 'makes things glow']},
+    {'symbol': 'Dy', 'name': 'Dysprosium', 'atomic_number': 66, 'atomic_mass': 162.50, 
+     'electron_config': '[Xe]4f¹⁰6s²', 'facts': ['rare earth metal', 'used in magnets', 'found in nature', 'very magnetic']},
+    {'symbol': 'Ho', 'name': 'Holmium', 'atomic_number': 67, 'atomic_mass': 164.93, 
+     'electron_config': '[Xe]4f¹¹6s²', 'facts': ['rare earth metal', 'used in magnets', 'found in nature', 'most magnetic element']},
+    {'symbol': 'Er', 'name': 'Erbium', 'atomic_number': 68, 'atomic_mass': 167.26, 
+     'electron_config': '[Xe]4f¹²6s²', 'facts': ['rare earth metal', 'used in fiber optics', 'found in nature', 'pink color']},
+    {'symbol': 'Tm', 'name': 'Thulium', 'atomic_number': 69, 'atomic_mass': 168.93, 
+     'electron_config': '[Xe]4f¹³6s²', 'facts': ['rare earth metal', 'rarest stable element', 'used in X-rays', 'very rare']},
+    {'symbol': 'Yb', 'name': 'Ytterbium', 'atomic_number': 70, 'atomic_mass': 173.05, 
+     'electron_config': '[Xe]4f¹⁴6s²', 'facts': ['rare earth metal', 'used in atomic clocks', 'found in nature', 'silver color']},
+    {'symbol': 'Lu', 'name': 'Lutetium', 'atomic_number': 71, 'atomic_mass': 174.97, 
+     'electron_config': '[Xe]4f¹⁴5d¹6s²', 'facts': ['rare earth metal', 'rarest element', 'used in research', 'very expensive']},
+    {'symbol': 'Hf', 'name': 'Hafnium', 'atomic_number': 72, 'atomic_mass': 178.49, 
+     'electron_config': '[Xe]4f¹⁴5d²6s²', 'facts': ['used in nuclear reactors', 'found with zirconium', 'very dense', 'resists heat']},
+    {'symbol': 'Ta', 'name': 'Tantalum', 'atomic_number': 73, 'atomic_mass': 180.95, 
+     'electron_config': '[Xe]4f¹⁴5d³6s²', 'facts': ['used in electronics', 'found in phones', 'resists corrosion', 'very hard']},
+    {'symbol': 'W', 'name': 'Tungsten', 'atomic_number': 74, 'atomic_mass': 183.84, 
+     'electron_config': '[Xe]4f¹⁴5d⁴6s²', 'facts': ['highest melting point', 'used in light bulbs', 'very hard', 'found in tools']},
+    {'symbol': 'Re', 'name': 'Rhenium', 'atomic_number': 75, 'atomic_mass': 186.21, 
+     'electron_config': '[Xe]4f¹⁴5d⁵6s²', 'facts': ['very rare metal', 'used in jet engines', 'very expensive', 'resists heat']},
+    {'symbol': 'Os', 'name': 'Osmium', 'atomic_number': 76, 'atomic_mass': 190.23, 
+     'electron_config': '[Xe]4f¹⁴5d⁶6s²', 'facts': ['densest element', 'used in pens', 'very hard', 'toxic metal']},
+    {'symbol': 'Ir', 'name': 'Iridium', 'atomic_number': 77, 'atomic_mass': 192.22, 
+     'electron_config': '[Xe]4f¹⁴5d⁷6s²', 'facts': ['precious metal', 'used in spark plugs', 'very dense', 'resists corrosion']},
+    {'symbol': 'Pt', 'name': 'Platinum', 'atomic_number': 78, 'atomic_mass': 195.08, 
+     'electron_config': '[Xe]4f¹⁴5d⁹6s¹', 'facts': ['precious metal', 'used in jewelry', 'catalyzes reactions', 'very expensive']},
     {'symbol': 'Au', 'name': 'Gold', 'atomic_number': 79, 'atomic_mass': 196.97, 
      'electron_config': '[Xe]4f¹⁴5d¹⁰6s¹', 'facts': ['precious metal', 'used in jewelry', 'never tarnishes', 'found in electronics']},
+    {'symbol': 'Hg', 'name': 'Mercury', 'atomic_number': 80, 'atomic_mass': 200.59, 
+     'electron_config': '[Xe]4f¹⁴5d¹⁰6s²', 'facts': ['only liquid metal', 'used in thermometers', 'very toxic', 'silver liquid']},
+    {'symbol': 'Tl', 'name': 'Thallium', 'atomic_number': 81, 'atomic_mass': 204.38, 
+     'electron_config': '[Xe]4f¹⁴5d¹⁰6s²6p¹', 'facts': ['very toxic', 'used in research', 'found in nature', 'dangerous element']},
+    {'symbol': 'Pb', 'name': 'Lead', 'atomic_number': 82, 'atomic_mass': 207.2, 
+     'electron_config': '[Xe]4f¹⁴5d¹⁰6s²6p²', 'facts': ['very heavy', 'used in batteries', 'toxic metal', 'found in old paint']},
+    {'symbol': 'Bi', 'name': 'Bismuth', 'atomic_number': 83, 'atomic_mass': 208.98, 
+     'electron_config': '[Xe]4f¹⁴5d¹⁰6s²6p³', 'facts': ['used in medicine', 'found in nature', 'colorful crystals', 'expands when frozen']},
+    {'symbol': 'Po', 'name': 'Polonium', 'atomic_number': 84, 'atomic_mass': 209.00, 
+     'electron_config': '[Xe]4f¹⁴5d¹⁰6s²6p⁴', 'facts': ['very radioactive', 'found by Marie Curie', 'very dangerous', 'glows in dark']},
+    {'symbol': 'At', 'name': 'Astatine', 'atomic_number': 85, 'atomic_mass': 210.00, 
+     'electron_config': '[Xe]4f¹⁴5d¹⁰6s²6p⁵', 'facts': ['rarest natural element', 'very radioactive', 'used in research', 'extremely rare']},
+    {'symbol': 'Rn', 'name': 'Radon', 'atomic_number': 86, 'atomic_mass': 222.00, 
+     'electron_config': '[Xe]4f¹⁴5d¹⁰6s²6p⁶', 'facts': ['radioactive gas', 'found in basements', 'very dangerous', 'noble gas']},
+    {'symbol': 'Fr', 'name': 'Francium', 'atomic_number': 87, 'atomic_mass': 223.00, 
+     'electron_config': '[Rn]7s¹', 'facts': ['most reactive metal', 'very radioactive', 'extremely rare', 'lasts only minutes']},
+    {'symbol': 'Ra', 'name': 'Radium', 'atomic_number': 88, 'atomic_mass': 226.00, 
+     'electron_config': '[Rn]7s²', 'facts': ['very radioactive', 'found by Marie Curie', 'glows in dark', 'used in old watches']},
+    {'symbol': 'Ac', 'name': 'Actinium', 'atomic_number': 89, 'atomic_mass': 227.00, 
+     'electron_config': '[Rn]6d¹7s²', 'facts': ['radioactive element', 'used in research', 'very rare', 'glows blue']},
+    {'symbol': 'Th', 'name': 'Thorium', 'atomic_number': 90, 'atomic_mass': 232.04, 
+     'electron_config': '[Rn]6d²7s²', 'facts': ['radioactive element', 'used in nuclear power', 'found in nature', 'very heavy']},
+    {'symbol': 'Pa', 'name': 'Protactinium', 'atomic_number': 91, 'atomic_mass': 231.04, 
+     'electron_config': '[Rn]5f²6d¹7s²', 'facts': ['very rare', 'radioactive', 'used in research', 'extremely rare']},
     {'symbol': 'U', 'name': 'Uranium', 'atomic_number': 92, 'atomic_mass': 238.03, 
      'electron_config': '[Rn]5f³6d¹7s²', 'facts': ['used in nuclear power', 'very heavy', 'radioactive', 'found in Earth\'s crust']},
+    {'symbol': 'Np', 'name': 'Neptunium', 'atomic_number': 93, 'atomic_mass': 237.00, 
+     'electron_config': '[Rn]5f⁴6d¹7s²', 'facts': ['first transuranic element', 'artificial', 'radioactive', 'named after Neptune']},
+    {'symbol': 'Pu', 'name': 'Plutonium', 'atomic_number': 94, 'atomic_mass': 244.00, 
+     'electron_config': '[Rn]5f⁶7s²', 'facts': ['used in nuclear weapons', 'artificial', 'very radioactive', 'named after Pluto']},
+    {'symbol': 'Am', 'name': 'Americium', 'atomic_number': 95, 'atomic_mass': 243.00, 
+     'electron_config': '[Rn]5f⁷7s²', 'facts': ['used in smoke detectors', 'artificial', 'radioactive', 'found in homes']},
+    {'symbol': 'Cm', 'name': 'Curium', 'atomic_number': 96, 'atomic_mass': 247.00, 
+     'electron_config': '[Rn]5f⁷6d¹7s²', 'facts': ['named after Curies', 'artificial', 'very radioactive', 'used in research']},
+    {'symbol': 'Bk', 'name': 'Berkelium', 'atomic_number': 97, 'atomic_mass': 247.00, 
+     'electron_config': '[Rn]5f⁹7s²', 'facts': ['named after Berkeley', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Cf', 'name': 'Californium', 'atomic_number': 98, 'atomic_mass': 251.00, 
+     'electron_config': '[Rn]5f¹⁰7s²', 'facts': ['named after California', 'artificial', 'very expensive', 'used in research']},
+    {'symbol': 'Es', 'name': 'Einsteinium', 'atomic_number': 99, 'atomic_mass': 252.00, 
+     'electron_config': '[Rn]5f¹¹7s²', 'facts': ['named after Einstein', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Fm', 'name': 'Fermium', 'atomic_number': 100, 'atomic_mass': 257.00, 
+     'electron_config': '[Rn]5f¹²7s²', 'facts': ['named after Fermi', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Md', 'name': 'Mendelevium', 'atomic_number': 101, 'atomic_mass': 258.00, 
+     'electron_config': '[Rn]5f¹³7s²', 'facts': ['named after Mendeleev', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'No', 'name': 'Nobelium', 'atomic_number': 102, 'atomic_mass': 259.00, 
+     'electron_config': '[Rn]5f¹⁴7s²', 'facts': ['named after Nobel', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Lr', 'name': 'Lawrencium', 'atomic_number': 103, 'atomic_mass': 262.00, 
+     'electron_config': '[Rn]5f¹⁴7s²7p¹', 'facts': ['named after Lawrence', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Rf', 'name': 'Rutherfordium', 'atomic_number': 104, 'atomic_mass': 267.00, 
+     'electron_config': '[Rn]5f¹⁴6d²7s²', 'facts': ['named after Rutherford', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Db', 'name': 'Dubnium', 'atomic_number': 105, 'atomic_mass': 268.00, 
+     'electron_config': '[Rn]5f¹⁴6d³7s²', 'facts': ['named after Dubna', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Sg', 'name': 'Seaborgium', 'atomic_number': 106, 'atomic_mass': 271.00, 
+     'electron_config': '[Rn]5f¹⁴6d⁴7s²', 'facts': ['named after Seaborg', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Bh', 'name': 'Bohrium', 'atomic_number': 107, 'atomic_mass': 272.00, 
+     'electron_config': '[Rn]5f¹⁴6d⁵7s²', 'facts': ['named after Bohr', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Hs', 'name': 'Hassium', 'atomic_number': 108, 'atomic_mass': 277.00, 
+     'electron_config': '[Rn]5f¹⁴6d⁶7s²', 'facts': ['named after Hesse', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Mt', 'name': 'Meitnerium', 'atomic_number': 109, 'atomic_mass': 278.00, 
+     'electron_config': '[Rn]5f¹⁴6d⁷7s²', 'facts': ['named after Meitner', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Ds', 'name': 'Darmstadtium', 'atomic_number': 110, 'atomic_mass': 281.00, 
+     'electron_config': '[Rn]5f¹⁴6d⁸7s²', 'facts': ['named after Darmstadt', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Rg', 'name': 'Roentgenium', 'atomic_number': 111, 'atomic_mass': 282.00, 
+     'electron_config': '[Rn]5f¹⁴6d⁹7s²', 'facts': ['named after Roentgen', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Cn', 'name': 'Copernicium', 'atomic_number': 112, 'atomic_mass': 285.00, 
+     'electron_config': '[Rn]5f¹⁴6d¹⁰7s²', 'facts': ['named after Copernicus', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Nh', 'name': 'Nihonium', 'atomic_number': 113, 'atomic_mass': 286.00, 
+     'electron_config': '[Rn]5f¹⁴6d¹⁰7s²7p¹', 'facts': ['named after Japan', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Fl', 'name': 'Flerovium', 'atomic_number': 114, 'atomic_mass': 289.00, 
+     'electron_config': '[Rn]5f¹⁴6d¹⁰7s²7p²', 'facts': ['named after Flerov', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Mc', 'name': 'Moscovium', 'atomic_number': 115, 'atomic_mass': 290.00, 
+     'electron_config': '[Rn]5f¹⁴6d¹⁰7s²7p³', 'facts': ['named after Moscow', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Lv', 'name': 'Livermorium', 'atomic_number': 116, 'atomic_mass': 293.00, 
+     'electron_config': '[Rn]5f¹⁴6d¹⁰7s²7p⁴', 'facts': ['named after Livermore', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Ts', 'name': 'Tennessine', 'atomic_number': 117, 'atomic_mass': 294.00, 
+     'electron_config': '[Rn]5f¹⁴6d¹⁰7s²7p⁵', 'facts': ['named after Tennessee', 'artificial', 'very rare', 'used in research']},
+    {'symbol': 'Og', 'name': 'Oganesson', 'atomic_number': 118, 'atomic_mass': 294.00, 
+     'electron_config': '[Rn]5f¹⁴6d¹⁰7s²7p⁶', 'facts': ['named after Oganessian', 'last element', 'artificial', 'very rare']},
 ]
 
-POINTS_PER_LEVEL = 25  # Every 25 points unlocks a new element level
+POINTS_PER_LEVEL = 10  # Every 10 points unlocks a new element level
+
+# Cat breeds for cat leveling system
+CAT_BREEDS = [
+    {'breed_number': 1, 'name': 'Persian', 'emoji': '🐱', 'origin': 'Iran', 'weight': '7-12 lbs', 
+     'facts': ['long, luxurious fur', 'calm and gentle', 'loves to lounge', 'very quiet meow']},
+    {'breed_number': 2, 'name': 'Siamese', 'emoji': '🐈', 'origin': 'Thailand', 'weight': '8-12 lbs',
+     'facts': ['very vocal and chatty', 'loves attention', 'smart and curious', 'pointed coat pattern']},
+    {'breed_number': 3, 'name': 'Maine Coon', 'emoji': '🐈‍⬛', 'origin': 'USA', 'weight': '10-18 lbs',
+     'facts': ['largest domestic breed', 'gentle giant', 'loves water', 'very friendly']},
+    {'breed_number': 4, 'name': 'Bengal', 'emoji': '🐅', 'origin': 'USA', 'weight': '8-15 lbs',
+     'facts': ['wild-looking spots', 'very active', 'loves to climb', 'water-loving']},
+    {'breed_number': 5, 'name': 'Ragdoll', 'emoji': '😸', 'origin': 'USA', 'weight': '10-20 lbs',
+     'facts': ['goes limp when held', 'blue eyes', 'very docile', 'loves cuddles']},
+    {'breed_number': 6, 'name': 'British Shorthair', 'emoji': '😺', 'origin': 'UK', 'weight': '9-18 lbs',
+     'facts': ['round face and eyes', 'plush coat', 'calm personality', 'independent']},
+    {'breed_number': 7, 'name': 'Abyssinian', 'emoji': '😻', 'origin': 'Ethiopia', 'weight': '6-10 lbs',
+     'facts': ['ticked coat pattern', 'very active', 'loves heights', 'dog-like personality']},
+    {'breed_number': 8, 'name': 'Scottish Fold', 'emoji': '🙀', 'origin': 'Scotland', 'weight': '6-13 lbs',
+     'facts': ['folded ears', 'round face', 'sweet expression', 'gentle and calm']},
+    {'breed_number': 9, 'name': 'Sphynx', 'emoji': '😹', 'origin': 'Canada', 'weight': '6-12 lbs',
+     'facts': ['hairless breed', 'needs warmth', 'very affectionate', 'loves attention']},
+    {'breed_number': 10, 'name': 'Norwegian Forest', 'emoji': '🐾', 'origin': 'Norway', 'weight': '10-18 lbs',
+     'facts': ['thick double coat', 'excellent climber', 'loves cold weather', 'independent']},
+    {'breed_number': 11, 'name': 'Russian Blue', 'emoji': '😼', 'origin': 'Russia', 'weight': '7-12 lbs',
+     'facts': ['silver-blue coat', 'green eyes', 'shy with strangers', 'very loyal']},
+    {'breed_number': 12, 'name': 'Turkish Angora', 'emoji': '😽', 'origin': 'Turkey', 'weight': '5-9 lbs',
+     'facts': ['long silky coat', 'playful and active', 'loves to jump', 'very intelligent']},
+    {'breed_number': 13, 'name': 'Oriental Shorthair', 'emoji': '😾', 'origin': 'Thailand', 'weight': '5-10 lbs',
+     'facts': ['slender body', 'large ears', 'very vocal', 'loves to play']},
+    {'breed_number': 14, 'name': 'American Shorthair', 'emoji': '😿', 'origin': 'USA', 'weight': '8-15 lbs',
+     'facts': ['hardy and healthy', 'good with kids', 'adaptable', 'friendly']},
+    {'breed_number': 15, 'name': 'Exotic Shorthair', 'emoji': '🙀', 'origin': 'USA', 'weight': '7-14 lbs',
+     'facts': ['Persian-like face', 'short plush coat', 'calm and sweet', 'easy-going']},
+    {'breed_number': 16, 'name': 'Devon Rex', 'emoji': '😸', 'origin': 'UK', 'weight': '5-10 lbs',
+     'facts': ['curly soft coat', 'large ears', 'playful and mischievous', 'loves people']},
+    {'breed_number': 17, 'name': 'Cornish Rex', 'emoji': '😻', 'origin': 'UK', 'weight': '6-10 lbs',
+     'facts': ['wavy coat', 'very active', 'loves to jump', 'dog-like behavior']},
+    {'breed_number': 18, 'name': 'Himalayan', 'emoji': '😺', 'origin': 'USA', 'weight': '7-12 lbs',
+     'facts': ['Persian-Siamese mix', 'pointed colors', 'calm and gentle', 'beautiful blue eyes']},
+    {'breed_number': 19, 'name': 'Burmese', 'emoji': '😹', 'origin': 'Myanmar', 'weight': '8-12 lbs',
+     'facts': ['sleek coat', 'very social', 'loves attention', 'people-oriented']},
+    {'breed_number': 20, 'name': 'Tonkinese', 'emoji': '😼', 'origin': 'USA', 'weight': '6-12 lbs',
+     'facts': ['Siamese-Burmese mix', 'aqua eyes', 'very playful', 'loves to talk']},
+]
+
+# Cat habitat items that unlock as you progress
+CAT_HABITAT_ITEMS = [
+    {'score_required': 0, 'name': 'Cardboard Box', 'emoji': '📦', 'description': 'A simple box - every cat\'s favorite!'},
+    {'score_required': 10, 'name': 'Scratching Post', 'emoji': '🌳', 'description': 'Perfect for stretching and sharpening claws'},
+    {'score_required': 20, 'name': 'Toy Mouse', 'emoji': '🐭', 'description': 'A fun toy to chase and pounce on'},
+    {'score_required': 30, 'name': 'Window Perch', 'emoji': '🪟', 'description': 'A sunny spot to watch birds and nap'},
+    {'score_required': 40, 'name': 'Cat Bed', 'emoji': '🛏️', 'description': 'A cozy bed for long naps'},
+    {'score_required': 50, 'name': 'Cat Tree', 'emoji': '🌲', 'description': 'Multi-level playground for climbing'},
+    {'score_required': 60, 'name': 'Feather Wand', 'emoji': '🪶', 'description': 'Interactive toy for playtime'},
+    {'score_required': 70, 'name': 'Catnip Plant', 'emoji': '🌿', 'description': 'Fresh catnip for extra fun'},
+    {'score_required': 80, 'name': 'Laser Pointer', 'emoji': '🔴', 'description': 'Endless entertainment'},
+    {'score_required': 90, 'name': 'Water Fountain', 'emoji': '⛲', 'description': 'Fresh flowing water'},
+    {'score_required': 100, 'name': 'Cat Hammock', 'emoji': '🛝', 'description': 'A relaxing hammock to lounge in'},
+    {'score_required': 110, 'name': 'Tunnel System', 'emoji': '🕳️', 'description': 'Maze of tunnels to explore'},
+    {'score_required': 120, 'name': 'Puzzle Feeder', 'emoji': '🧩', 'description': 'Mental stimulation while eating'},
+    {'score_required': 130, 'name': 'Heated Bed', 'emoji': '🔥', 'description': 'Warm and cozy for cold days'},
+    {'score_required': 140, 'name': 'Outdoor Enclosure', 'emoji': '🏡', 'description': 'Safe outdoor space to explore'},
+]
+
+# Level type configuration: which users see which level types
+LEVEL_TYPE_CONFIG = {
+    'raya': ['chemistry', 'cat'],      # Raya sees both
+    'vik': ['chemistry'],               # Vik sees only chemistry
+    'mira': ['chemistry', 'cat'],      # Mira sees both
+    'mira5': ['chemistry', 'cat'],
+    'mira3': ['chemistry', 'cat'],
+    'mira6': ['chemistry', 'cat'],
+    # Default (unknown users) see both
+}
+
+def get_level_types_for_user(player_name):
+    """Get the level types a user should see. Returns list of level type strings."""
+    return LEVEL_TYPE_CONFIG.get(player_name.lower(), ['chemistry', 'cat'])
 
 def get_element_level(score):
     """Get the element level based on score. Returns element info dict."""
@@ -92,6 +358,26 @@ def get_element_level(score):
     element['next_level_score'] = (level_index + 1) * POINTS_PER_LEVEL if level_index < len(PERIODIC_ELEMENTS) - 1 else None
     element['progress'] = (score - element['score_required']) / POINTS_PER_LEVEL if element['next_level_score'] else 1.0
     return element
+
+def get_cat_level(score):
+    """Get the cat level based on score. Returns cat breed info + habitat items dict."""
+    # Get current breed
+    breed_index = min(score // POINTS_PER_LEVEL, len(CAT_BREEDS) - 1)
+    breed = CAT_BREEDS[breed_index].copy()
+    breed['level'] = breed_index + 1
+    breed['score_required'] = breed_index * POINTS_PER_LEVEL
+    breed['next_level_score'] = (breed_index + 1) * POINTS_PER_LEVEL if breed_index < len(CAT_BREEDS) - 1 else None
+    breed['progress'] = (score - breed['score_required']) / POINTS_PER_LEVEL if breed['next_level_score'] else 1.0
+    
+    # Get unlocked habitat items
+    unlocked_items = [item for item in CAT_HABITAT_ITEMS if score >= item['score_required']]
+    next_item = next((item for item in CAT_HABITAT_ITEMS if score < item['score_required']), None)
+    
+    breed['habitat_items'] = unlocked_items
+    breed['next_habitat_item'] = next_item
+    breed['next_habitat_score'] = next_item['score_required'] if next_item else None
+    
+    return breed
 
 # Core game logic functions (no I/O)
 def get_ollama_model():
@@ -622,8 +908,18 @@ def game_loop_cli(player_name, words, games_enabled=False):
             scores[player_name] -= cost
 
 # Flask web interface
+from pathlib import Path
+from flask import send_from_directory
+
 app = Flask(__name__)
 words = load_words()
+
+# Serve static files from assets directory
+@app.route('/assets/<path:filename>')
+def serve_assets(filename):
+    """Serve static assets like cat images."""
+    assets_dir = Path('assets')
+    return send_from_directory(str(assets_dir), filename)
 
 @app.route('/')
 def index():
@@ -659,13 +955,20 @@ def start_game():
     if game_type == 'words':
         warmup_ollama()
     
-    element_level = get_element_level(current_score)
+    # Get level types for this user
+    level_types = get_level_types_for_user(player_name)
+    levels = {}
+    if 'chemistry' in level_types:
+        levels['chemistry'] = get_element_level(current_score)
+    if 'cat' in level_types:
+        levels['cat'] = get_cat_level(current_score)
     
     return jsonify({
         'status': 'started',
         'score': current_score,
         'game_type': game_type,
-        'level': element_level
+        'levels': levels,
+        'level_types': level_types
     })
 
 @app.route('/api/question', methods=['GET'])
@@ -676,10 +979,17 @@ def get_question():
     if not player_name:
         return jsonify({'error': 'Player name required'}), 400
     
+    # Get level types for this user
+    level_types = get_level_types_for_user(player_name)
+    levels = {}
+    
     if game_type == 'math':
         current_score = get_player_score(player_name, 'math')
         math_question = get_next_math_question(player_name)
-        element_level = get_element_level(current_score)
+        if 'chemistry' in level_types:
+            levels['chemistry'] = get_element_level(current_score)
+        if 'cat' in level_types:
+            levels['cat'] = get_cat_level(current_score)
         return jsonify({
             'question': math_question['question'],
             'options': math_question['options'],
@@ -687,18 +997,23 @@ def get_question():
             'correct_answer': math_question['correct_answer'],
             'score': current_score,
             'game_type': 'math',
-            'level': element_level
+            'levels': levels,
+            'level_types': level_types
         })
     else:
         current_score = get_player_score(player_name, 'words')
         word_info = get_next_word(player_name, words)
-        element_level = get_element_level(current_score)
+        if 'chemistry' in level_types:
+            levels['chemistry'] = get_element_level(current_score)
+        if 'cat' in level_types:
+            levels['cat'] = get_cat_level(current_score)
         return jsonify({
             'word': word_info['word'],
             'definition': word_info['definition'],
             'score': current_score,
             'game_type': 'words',
-            'level': element_level
+            'levels': levels,
+            'level_types': level_types
         })
 
 @app.route('/api/answer', methods=['POST'])
@@ -718,13 +1033,19 @@ def check_answer_api():
     
     if is_correct:
         current_score = get_player_score(player_name)
-        element_level = get_element_level(current_score)
+        level_types = get_level_types_for_user(player_name)
+        levels = {}
+        if 'chemistry' in level_types:
+            levels['chemistry'] = get_element_level(current_score)
+        if 'cat' in level_types:
+            levels['cat'] = get_cat_level(current_score)
         return jsonify({
             'correct': True,
             'points': points,
             'score': current_score,
             'message': message,
-            'level': element_level
+            'levels': levels,
+            'level_types': level_types
         })
     elif show_mc:
         return jsonify({
@@ -760,14 +1081,20 @@ def check_mc_answer_api():
         )
         
         current_score = get_player_score(player_name, 'math')
-        element_level = get_element_level(current_score)
+        level_types = get_level_types_for_user(player_name)
+        levels = {}
+        if 'chemistry' in level_types:
+            levels['chemistry'] = get_element_level(current_score)
+        if 'cat' in level_types:
+            levels['cat'] = get_cat_level(current_score)
         
         return jsonify({
             'correct': is_correct,
             'points': points,
             'score': current_score,
             'message': message,
-            'level': element_level
+            'levels': levels,
+            'level_types': level_types
         })
     else:
         if not all([player_name, selected_index is not None, correct_index is not None, correct_def, word]):
@@ -778,15 +1105,58 @@ def check_mc_answer_api():
         )
         
         current_score = get_player_score(player_name, 'words')
-        element_level = get_element_level(current_score)
+        level_types = get_level_types_for_user(player_name)
+        levels = {}
+        if 'chemistry' in level_types:
+            levels['chemistry'] = get_element_level(current_score)
+        if 'cat' in level_types:
+            levels['cat'] = get_cat_level(current_score)
         
         return jsonify({
             'correct': is_correct,
             'points': points,
             'score': current_score,
             'message': message,
-            'level': element_level
+            'levels': levels,
+            'level_types': level_types
         })
+
+@app.route('/api/cat_images', methods=['GET'])
+def get_cat_images():
+    """Serve local cat breed images from assets directory."""
+    breed_name = request.args.get('breed', '').strip()
+    
+    if not breed_name:
+        return jsonify({'error': 'Breed name required'}), 400
+    
+    # Convert breed name to directory name (lowercase, underscores)
+    breed_dir_name = breed_name.lower().replace(' ', '_').replace("'", '')
+    assets_dir = Path('assets/cat_images')
+    breed_dir = assets_dir / breed_dir_name
+    
+    images = []
+    
+    # Check if local images exist
+    if breed_dir.exists():
+        # Get all image files in the breed directory
+        image_extensions = ['.jpg', '.jpeg', '.png', '.webp']
+        image_files = []
+        for ext in image_extensions:
+            image_files.extend(breed_dir.glob(f'*{ext}'))
+            image_files.extend(breed_dir.glob(f'*{ext.upper()}'))
+        
+        # Sort by filename to get consistent order
+        image_files.sort()
+        
+        # Return up to 5 images as URLs
+        for img_file in image_files[:5]:
+            # Create URL path relative to assets
+            img_path = f"cat_images/{breed_dir_name}/{img_file.name}"
+            images.append(f"/assets/{img_path}")
+    
+    # If no local images found, return empty list (frontend will show emoji)
+    # Note: Run download_cat_images.py script to populate local images
+    return jsonify({'images': images[:5]})  # Return up to 5 images
 
 # Main entry point
 if __name__ == "__main__":

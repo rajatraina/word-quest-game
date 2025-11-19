@@ -1,3 +1,4 @@
 ollama
 pygame
 flask
+requests
