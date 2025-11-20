@@ -65,7 +65,7 @@
         .cat-card-container {
             background: white;
             border-radius: 20px;
-            padding: 30px;
+            padding: 20px;
             width: 700px;
             max-width: 700px;
             min-width: 700px;
@@ -194,7 +194,7 @@
         .cat-card {
             border: 4px solid #000;
             border-radius: 15px;
-            padding: 25px;
+            padding: 15px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             position: relative;
             min-height: 450px;
@@ -210,7 +210,7 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 5px;
-            margin: 20px 0;
+            margin: 10px 0;
             width: 100%;
         }
         
@@ -242,14 +242,14 @@
             font-weight: 600;
             text-align: center;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         
         .cat-info {
             font-size: 16px;
             text-align: center;
             color: #666;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         
         .cat-stats {
@@ -257,8 +257,8 @@
             justify-content: center;
             gap: 15px;
             flex-wrap: wrap;
-            margin: 15px 0;
-            padding: 10px;
+            margin: 10px 0;
+            padding: 8px;
             background: #f8f9fa;
             border-radius: 8px;
             border: 1px solid #ddd;
@@ -285,9 +285,8 @@
         }
         
         .cat-facts {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px solid #ddd;
+            margin-top: 10px;
+            padding-top: 10px;
         }
         
         .cat-facts h3 {
@@ -302,7 +301,7 @@
         }
         
         .cat-facts li {
-            padding: 8px 0;
+            padding: 4px 0;
             padding-left: 20px;
             position: relative;
             color: #555;
@@ -560,7 +559,7 @@
                 <div class="level-progress">
                     <div class="progress-text" id="cat-progress-text"></div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar" id="cat-progress-bar" style="background: linear-gradient(90deg, #ff9800 0%, #ff6f00 100%);"></div>
+                        <div class="progress-bar" id="cat-progress-bar"></div>
                     </div>
                 </div>
             </div>
@@ -862,7 +861,9 @@
         function updateCatCard(catLevel, currentScore) {
             document.getElementById('cat-breed-name').textContent = catLevel.name;
             document.getElementById('cat-info').textContent = `${catLevel.origin} • ${catLevel.weight}`;
-            document.getElementById('cat-facts-title').textContent = `About ${catLevel.name}`;
+            
+            // Hide the "About [Breed Name]" heading as it's redundant
+            document.getElementById('cat-facts-title').style.display = 'none';
             
             // Show emoji initially while loading images
             const emojiDiv = document.getElementById('cat-emoji');
@@ -934,7 +935,23 @@
             const factsList = document.getElementById('cat-facts-list');
             factsList.innerHTML = '';
             if (catLevel.facts && catLevel.facts.length > 0) {
-                catLevel.facts.forEach(fact => {
+                // Show only first fact and last 2 facts (3 lines total)
+                const factsToShow = [];
+                
+                // Add first fact (description)
+                factsToShow.push(catLevel.facts[0]);
+                
+                // Add last 2 facts (if there are at least 3 facts total)
+                if (catLevel.facts.length >= 3) {
+                    factsToShow.push(...catLevel.facts.slice(-2));
+                } else if (catLevel.facts.length === 2) {
+                    // If only 2 facts, show both (first and last)
+                    factsToShow.push(catLevel.facts[1]);
+                }
+                // If only 1 fact, we already added it above
+                
+                // Display the selected facts
+                factsToShow.forEach(fact => {
                     const li = document.createElement('li');
                     li.textContent = fact;
                     factsList.appendChild(li);
